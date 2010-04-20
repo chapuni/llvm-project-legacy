@@ -495,7 +495,7 @@ static void LazilyInitializeModule(void) {
   const Target *TME =
     TargetRegistry::lookupTarget(TargetTriple, Err);
   if (!TME)
-    report_fatal_error(Err);
+    llvm_report_error(Err);
 
   // Figure out the subtarget feature string we pass to the target.
   std::string FeatureStr;
@@ -556,7 +556,7 @@ static void InitializeOutputStreams(bool Binary) {
                                  Binary ? raw_fd_ostream::F_Binary : 0);
 
   if (!Error.empty())
-    report_fatal_error(Error);
+    llvm_report_error(Error);
 
   FormattedOutStream.setStream(*OutStream,
                                formatted_raw_ostream::PRESERVE_STREAM);
