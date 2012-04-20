@@ -621,6 +621,7 @@ TreeToLLVM::~TreeToLLVM() {
 
 /// isLocalDecl - Whether this declaration is local to the current function.
 static bool isLocalDecl(tree decl) {
+  if (isa<CONST_DECL>(decl)) return false;
   assert(HAS_RTL_P(decl) && "Expected a declaration with RTL!");
   return
     // GCC bug workaround: RESULT_DECL may not have DECL_CONTEXT set in thunks.
@@ -1781,7 +1782,53 @@ Value *TreeToLLVM::CastToAnyType(Value *V, bool VisSigned,
   return Builder.CreateCast(opc, V, DestTy);
 }
 
-/// CastToFPType - Cast the specified value to the specified type assuming
+/// CastFromSameSizeInteger - Cast an integer (or vector of integer) value to
+/// the given scalar (resp. vector of scalar) type of the same bitwidth.
+Value *TreeToLLVM::CastFromSameSizeInteger(Value *V, Type *Ty) {
+  Type *OrigTy = V->getType();
+  Type *OrigEltTy = OrigTy->getScalarType();
+  assert(OrigEltTy->isIntegerTy() && "Expected an integer type!");
+  Type *EltTy = Ty->getScalarType();
+  if (EltTy->isIntegerTy()) {
+    // Already an integer/vector of integer - nothing to do.
+    assert(OrigTy == Ty && "Integer type not same size!");
+    return V;
+  }
+  if (EltTy->isPointerTy()) {
+    // A pointer/vector of pointer - use inttoptr.
+    assert(OrigEltTy->getPrimitiveSizeInBits() ==
+           TD.getPointerSizeInBits() && "Pointer type not same size!");
+    return Builder.CreateIntToPtr(V, Ty);
+  }
+  // Everything else.
+  assert(Ty->isFPOrFPVectorTy() && "Expected a floating point type!");
+  return Builder.CreateBitCast(V, Ty); // Will catch any size mismatch.
+}
+
+/// CastToSameSizeInteger - Cast the specified scalar (or vector of scalar)
+/// value to an integer (resp. vector of integer) of the same bit width.
+Value *TreeToLLVM::CastToSameSizeInteger(Value *V) {
+  Type *OrigTy = V->getType();
+  Type *OrigEltTy = OrigTy->getScalarType();
+  if (OrigEltTy->isIntegerTy())
+    // Already an integer/vector of integer - nothing to do.
+    return V;
+  unsigned VecElts = isa<VectorType>(OrigTy) ?
+    cast<VectorType>(OrigTy)->getNumElements() : 0;
+  if (OrigEltTy->isPointerTy()) {
+    // A pointer/vector of pointer - form a (vector of) pointer sized integers.
+    Type *NewEltTy = TD.getIntPtrType(Context);
+    Type *NewTy = VecElts ? VectorType::get(NewEltTy, VecElts) : NewEltTy;
+    return Builder.CreatePtrToInt(V, NewTy);
+  }
+  // Everything else.
+  assert(OrigTy->isFPOrFPVectorTy() && "Expected a floating point type!");
+  unsigned BitWidth = OrigEltTy->getPrimitiveSizeInBits();
+  Type *NewEltTy = IntegerType::get(Context, BitWidth);
+  Type *NewTy = VecElts ? VectorType::get(NewEltTy, VecElts) : NewEltTy;
+  return Builder.CreateBitCast(V, NewTy);
+}
+
 /// that the value and type are floating point.
 Value *TreeToLLVM::CastToFPType(Value *V, Type* Ty) {
   unsigned SrcBits = V->getType()->getPrimitiveSizeInBits();
@@ -1894,7 +1941,7 @@ static unsigned CostOfAccessingAllElements(tree type) {
     Type *Ty = ConvertType(type);
     unsigned TotalCost = 0;
     for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
-      assert(isa<FIELD_DECL>(Field) && "Lang data not freed?");
+      if (!isa<FIELD_DECL>(Field)) continue;
       // If the field has no size, for example because it is a C-style variable
       // length array, then just give up.
       if (!DECL_SIZE(Field))
@@ -1956,6 +2003,7 @@ void TreeToLLVM::CopyElementByElement(MemRef DestLoc, MemRef SrcLoc,
 
     // Copy each field in turn.
     for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
+      if (!isa<FIELD_DECL>(Field)) continue;
       // Ignore fields of size zero.
       if (integer_zerop(DECL_SIZE(Field)))
         continue;
@@ -2053,6 +2101,7 @@ void TreeToLLVM::ZeroElementByElement(MemRef DestLoc, tree type) {
 
     // Zero each field in turn.
     for (tree Field = TYPE_FIELDS(type); Field; Field = TREE_CHAIN(Field)) {
+      if (!isa<FIELD_DECL>(Field)) continue;
       // Ignore fields of size zero.
       if (integer_zerop(DECL_SIZE(Field)))
         continue;
@@ -2336,7 +2385,7 @@ void TreeToLLVM::EmitAutomaticVariableDecl(tree decl) {
 static Constant *ConvertTypeInfo(tree type) {
   // TODO: Once pass_ipa_free_lang is made a default pass, remove the call to
   // lookup_type_for_runtime below.
-  if (TYPE_P (type))
+  if (isa<TYPE>(type))
     type = lookup_type_for_runtime (type);
   STRIP_NOPS(type);
   if (isa<ADDR_EXPR>(type))
@@ -7114,15 +7163,24 @@ Value *TreeToLLVM::EmitReg_CEIL_DIV_EXPR(tree op0, tree op1) {
 }
 
 Value *TreeToLLVM::EmitReg_BIT_AND_EXPR(tree op0, tree op1) {
-  return Builder.CreateAnd(EmitRegister(op0), EmitRegister(op1));
+  Value *LHS = CastToSameSizeInteger(EmitRegister(op0));
+  Value *RHS = CastToSameSizeInteger(EmitRegister(op1));
+  Value *Res = Builder.CreateAnd(LHS, RHS);
+  return CastFromSameSizeInteger(Res, getRegType(TREE_TYPE(op0)));
 }
 
 Value *TreeToLLVM::EmitReg_BIT_IOR_EXPR(tree op0, tree op1) {
-  return Builder.CreateOr(EmitRegister(op0), EmitRegister(op1));
+  Value *LHS = CastToSameSizeInteger(EmitRegister(op0));
+  Value *RHS = CastToSameSizeInteger(EmitRegister(op1));
+  Value *Res = Builder.CreateOr(LHS, RHS);
+  return CastFromSameSizeInteger(Res, getRegType(TREE_TYPE(op0)));
 }
 
 Value *TreeToLLVM::EmitReg_BIT_XOR_EXPR(tree op0, tree op1) {
-  return Builder.CreateXor(EmitRegister(op0), EmitRegister(op1));
+  Value *LHS = CastToSameSizeInteger(EmitRegister(op0));
+  Value *RHS = CastToSameSizeInteger(EmitRegister(op1));
+  Value *Res = Builder.CreateXor(LHS, RHS);
+  return CastFromSameSizeInteger(Res, getRegType(TREE_TYPE(op0)));
 }
 
 Value *TreeToLLVM::EmitReg_COMPLEX_EXPR(tree op0, tree op1) {
@@ -8145,6 +8203,16 @@ void TreeToLLVM::RenderGIMPLE_ASM(gimple stmt) {
 
 void TreeToLLVM::RenderGIMPLE_ASSIGN(gimple stmt) {
   tree lhs = gimple_assign_lhs(stmt);
+
+#if (GCC_MINOR > 6)
+  // Assigning a right-hand side with TREE_CLOBBER_P says that the left-hand
+  // side is dead from this point on.
+  // TODO: Consider outputting an llvm.lifetime.end intrinsic to indicate this.
+  if (get_gimple_rhs_class(gimple_expr_code(stmt)) == GIMPLE_SINGLE_RHS &&
+      TREE_CLOBBER_P(gimple_assign_rhs1(stmt)))
+    return;
+#endif
+
   if (isa<AGGREGATE_TYPE>(TREE_TYPE(lhs))) {
     assert(get_gimple_rhs_class(gimple_expr_code(stmt)) == GIMPLE_SINGLE_RHS &&
            "Aggregate type but rhs not simple!");

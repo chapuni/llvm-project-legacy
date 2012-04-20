@@ -1147,13 +1147,10 @@ static Constant *ConvertRecordCONSTRUCTOR(tree exp, TargetFolder &Folder) {
     // Record all interesting fields so they can easily be visited backwards.
     SmallVector<tree, 16> Fields;
     for (tree field = TYPE_FIELDS(type); field; field = TREE_CHAIN(field)) {
-      assert(isa<FIELD_DECL>(field) && "Lang data not freed?");
+      if (!isa<FIELD_DECL>(field)) continue;
       // Ignore fields with variable or unknown position since they cannot be
       // default initialized.
       if (!OffsetIsLLVMCompatible(field))
-        continue;
-      // Skip fields that are known not to be present.
-      if (isa<QUAL_UNION_TYPE>(type) && integer_zerop(DECL_QUALIFIER(field)))
         continue;
       Fields.push_back(field);
     }
@@ -1384,7 +1381,8 @@ static Constant *ConvertVIEW_CONVERT_EXPR(tree exp, TargetFolder &Folder) {
 
 /// ConvertInitializerImpl - Implementation of ConvertInitializer.
 static Constant *ConvertInitializerImpl(tree exp, TargetFolder &Folder) {
-  assert(!HAS_RTL_P(exp) && "Cache collision with decl_llvm!");
+  assert(!isa<CONST_DECL>(exp) && !HAS_RTL_P(exp) &&
+         "Cache collision with decl_llvm!");
 
   // If we already converted the initializer then return the cached copy.
   if (Constant *C = cast_or_null<Constant>(getCachedValue(exp)))
@@ -1611,6 +1609,23 @@ static Constant *AddressOfLABEL_DECL(tree exp, TargetFolder &) {
   return TheTreeToLLVM->AddressOfLABEL_DECL(exp);
 }
 
+#if (GCC_MINOR > 5)
+/// AddressOfMEM_REF - Return the address of a memory reference.
+static Constant *AddressOfMEM_REF(tree exp, TargetFolder &Folder) {
+  // The address is the first operand offset in bytes by the second.
+  Constant *Addr = getAsRegister(TREE_OPERAND(exp, 0), Folder);
+  if (integer_zerop(TREE_OPERAND(exp, 1)))
+    return Addr;
+
+  // Convert to a byte pointer and displace by the offset.
+  Addr = Folder.CreateBitCast(Addr, GetUnitPointerType(Context));
+  APInt Delta = getIntegerValue(TREE_OPERAND(exp, 1));
+  Constant *Offset = ConstantInt::get(Context, Delta);
+  // The address is always inside the referenced object, so "inbounds".
+  return Folder.CreateInBoundsGetElementPtr(Addr, Offset);
+}
+#endif
+
 /// AddressOfImpl - Implementation of AddressOf.
 static Constant *AddressOfImpl(tree exp, TargetFolder &Folder) {
   Constant *Addr;
@@ -1651,6 +1666,11 @@ static Constant *AddressOfImpl(tree exp, TargetFolder &Folder) {
   case LABEL_DECL:
     Addr = AddressOfLABEL_DECL(exp, Folder);
     break;
+#if (GCC_MINOR > 5)
+  case MEM_REF:
+    Addr = AddressOfMEM_REF(exp, Folder);
+    break;
+#endif
   }
 
   // Ensure that the address has the expected type.  It is simpler to do this

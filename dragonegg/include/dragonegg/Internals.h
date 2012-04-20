@@ -328,15 +328,13 @@ public:
   /// of the types involved. This is an inferred cast.
   Value *CastToAnyType (Value *V, bool VSigned, Type *Ty, bool TySigned);
 
-  /// CastToUIntType - Cast the specified value to the specified type assuming
-  /// that V's type and Ty are integral types. This arbitrates between BitCast,
-  /// Trunc and ZExt.
-  Value *CastToUIntType(Value *V, Type *Ty);
+  /// CastFromSameSizeInteger - Cast an integer (or vector of integer) value to
+  /// the given scalar (resp. vector of scalar) type of the same bitwidth.
+  Value *CastFromSameSizeInteger(Value *V, Type *Ty);
 
-  /// CastToSIntType - Cast the specified value to the specified type assuming
-  /// that V's type and Ty are integral types. This arbitrates between BitCast,
-  /// Trunc and SExt.
-  Value *CastToSIntType(Value *V, Type *Ty);
+  /// CastToSameSizeInteger - Cast the specified scalar (or vector of scalar)
+  /// value to an integer (resp. vector of integer) of the same bit width.
+  Value *CastToSameSizeInteger(Value *V);
 
   /// CastToFPType - Cast the specified value to the specified type assuming
   /// that V's type and Ty are floating point types. This arbitrates between

@@ -145,7 +145,8 @@ static void createPerModuleOptimizationPasses();
 
 /// set_decl_llvm - Remember the LLVM value for a GCC declaration.
 Value *set_decl_llvm(tree t, Value *V) {
-  assert(HAS_RTL_P(t) && "Expected a declaration with RTL!");
+  assert((isa<CONST_DECL>(t) || HAS_RTL_P(t)) &&
+         "Expected a declaration with RTL!");
   assert((!V || isa<GlobalValue>(V)) && "Expected a global value!");
   setCachedValue(t, V);
   return V;
@@ -153,7 +154,8 @@ Value *set_decl_llvm(tree t, Value *V) {
 
 /// get_decl_llvm - Retrieve the LLVM value for a GCC declaration, or NULL.
 Value *get_decl_llvm(tree t) {
-  assert(HAS_RTL_P(t) && "Expected a declaration with RTL!");
+  assert((isa<CONST_DECL>(t) || HAS_RTL_P(t)) &&
+         "Expected a declaration with RTL!");
   Value *V = getCachedValue(t);
   return V ? V->stripPointerCasts() : 0;
 }
@@ -1083,8 +1085,9 @@ Value *make_decl_llvm(tree decl) {
 
   // Global register variable with asm name, e.g.:
   // register unsigned long esp __asm__("ebp");
-  if (!isa<FUNCTION_DECL>(decl) && DECL_REGISTER(decl)) {
-    // This  just verifies that the variable is ok.  The actual "load/store"
+  if (!isa<FUNCTION_DECL>(decl) && !isa<CONST_DECL>(decl) &&
+      DECL_REGISTER(decl)) {
+    // This just verifies that the variable is ok.  The actual "load/store"
     // code paths handle accesses to the variable.
     ValidateRegisterVariable(decl);
     return NULL;
@@ -2253,6 +2256,8 @@ plugin_init(struct plugin_name_args *plugin_info,
     pass_info.pos_op = PASS_POS_REPLACE;
     register_callback(plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
 
+    // Leave pass_ipa_tm.
+
     // Leave pass_ipa_lower_emutls. ???
 
     // Leave pass_ipa_whole_program_visibility. ???
@@ -2289,12 +2294,14 @@ plugin_init(struct plugin_name_args *plugin_info,
     pass_info.pos_op = PASS_POS_REPLACE;
     register_callback(plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
 
+#if (GCC_MINOR < 7)
     // Turn off pass_ipa_type_escape.
     pass_info.pass = &pass_simple_ipa_null.pass;
     pass_info.reference_pass_name = "type-escape-var";
     pass_info.ref_pass_instance_number = 0;
     pass_info.pos_op = PASS_POS_REPLACE;
     register_callback(plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
+#endif
 
     // Turn off pass_ipa_pta.
     pass_info.pass = &pass_simple_ipa_null.pass;
@@ -2303,12 +2310,14 @@ plugin_init(struct plugin_name_args *plugin_info,
     pass_info.pos_op = PASS_POS_REPLACE;
     register_callback(plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
 
+#if (GCC_MINOR < 7)
     // Turn off pass_ipa_struct_reorg.
     pass_info.pass = &pass_simple_ipa_null.pass;
     pass_info.reference_pass_name = "ipa_struct_reorg";
     pass_info.ref_pass_instance_number = 0;
     pass_info.pos_op = PASS_POS_REPLACE;
     register_callback(plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
+#endif
   }
 
   // Replace the LTO gimple pass with a pass that converts same-body aliases and
@@ -2342,56 +2351,58 @@ plugin_init(struct plugin_name_args *plugin_info,
                     NULL);
 
   if (!EnableGCCOptimizations) {
-    // Disable pass_lower_eh_dispatch, which runs after LLVM conversion.
+    // Disable pass_lower_eh_dispatch.
     pass_info.pass = &pass_gimple_null.pass;
     pass_info.reference_pass_name = "ehdisp";
     pass_info.ref_pass_instance_number = 0;
     pass_info.pos_op = PASS_POS_REPLACE;
     register_callback(plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
 
-    // Disable pass_all_optimizations, which runs after LLVM conversion.
+    // Disable pass_all_optimizations.
     pass_info.pass = &pass_gimple_null.pass;
     pass_info.reference_pass_name = "*all_optimizations";
     pass_info.ref_pass_instance_number = 0;
     pass_info.pos_op = PASS_POS_REPLACE;
     register_callback(plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
 
-    // Disable pass_lower_complex_O0, which runs after LLVM conversion.
+    // Leave pass_tm_init.
+
+    // Disable pass_lower_complex_O0.
     pass_info.pass = &pass_gimple_null.pass;
     pass_info.reference_pass_name = "cplxlower0";
     pass_info.ref_pass_instance_number = 0;
     pass_info.pos_op = PASS_POS_REPLACE;
     register_callback(plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
 
-    // Disable pass_cleanup_eh, which runs after LLVM conversion.
+    // Disable pass_cleanup_eh.
     pass_info.pass = &pass_gimple_null.pass;
     pass_info.reference_pass_name = "ehcleanup";
     pass_info.ref_pass_instance_number = 0;
     pass_info.pos_op = PASS_POS_REPLACE;
     register_callback(plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
 
-    // Disable pass_lower_resx, which runs after LLVM conversion.
+    // Disable pass_lower_resx.
     pass_info.pass = &pass_gimple_null.pass;
     pass_info.reference_pass_name = "resx";
     pass_info.ref_pass_instance_number = 0;
     pass_info.pos_op = PASS_POS_REPLACE;
     register_callback(plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
 
-    // Disable pass_nrv, which runs after LLVM conversion.
+    // Disable pass_nrv.
     pass_info.pass = &pass_gimple_null.pass;
     pass_info.reference_pass_name = "nrv";
     pass_info.ref_pass_instance_number = 0;
     pass_info.pos_op = PASS_POS_REPLACE;
     register_callback(plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
 
-    // Disable pass_mudflap_2, which runs after LLVM conversion.
+    // Disable pass_mudflap_2. ???
     pass_info.pass = &pass_gimple_null.pass;
     pass_info.reference_pass_name = "mudflap2";
     pass_info.ref_pass_instance_number = 0;
     pass_info.pos_op = PASS_POS_REPLACE;
     register_callback(plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
 
-    // Disable pass_cleanup_cfg_post_optimizing, which runs after LLVM conversion.
+    // Disable pass_cleanup_cfg_post_optimizing.
     pass_info.pass = &pass_gimple_null.pass;
     pass_info.reference_pass_name = "optimized";
     pass_info.ref_pass_instance_number = 0;
