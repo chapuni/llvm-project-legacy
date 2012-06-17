@@ -59,6 +59,7 @@ add_dependencies(clangCodeGen
   ClangDiagnosticCommon
   ClangDiagnosticFrontend
   ClangStmtNodes
+  intrinsics_gen
   )
 
 target_link_libraries(clangCodeGen
