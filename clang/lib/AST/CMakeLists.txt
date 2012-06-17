@@ -61,8 +61,8 @@ add_clang_library(clangAST
 add_dependencies(clangAST
   ClangARMNeon
   ClangAttrClasses
-  ClangAttrList
   ClangAttrImpl
+  ClangAttrList
   ClangCommentNodes
   ClangDeclNodes
   ClangDiagnosticAST
