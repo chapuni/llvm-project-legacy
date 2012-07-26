@@ -1,5 +1,5 @@
 set( LLVM_LINK_COMPONENTS
-  support
+  clangFrontend
   )
 
 add_clang_executable(diagtool

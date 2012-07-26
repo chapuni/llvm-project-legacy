@@ -1,6 +1,6 @@
 set( LLVM_LINK_COMPONENTS
-  support
-  mc
+  clangARCMigrate
+  clangTooling
   )
 
 set(SOURCES

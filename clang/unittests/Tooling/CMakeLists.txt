@@ -1,3 +1,7 @@
+set(LLVM_LINK_COMPONENTS
+  clangTooling
+  )
+
 add_clang_unittest(ToolingTests
   CommentHandlerTest.cpp
   CompilationDatabaseTest.cpp

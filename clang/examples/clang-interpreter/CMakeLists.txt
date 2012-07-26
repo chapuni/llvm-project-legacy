@@ -1,14 +1,8 @@
 set(LLVM_LINK_COMPONENTS
+  clangCodeGen
   jit
   interpreter
   nativecodegen
-  asmparser
-  bitreader
-  bitwriter
-  codegen
-  ipo
-  linker
-  selectiondag
   )
 
 add_clang_executable(clang-interpreter

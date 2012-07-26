@@ -1,6 +1,5 @@
 set( LLVM_LINK_COMPONENTS
-  support
-  mc
+  libclang
   )
 
 add_clang_executable(c-arcmt-test

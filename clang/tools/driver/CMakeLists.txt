@@ -1,13 +1,7 @@
 set( LLVM_LINK_COMPONENTS
   ${LLVM_TARGETS_TO_BUILD}
-  asmparser
-  bitreader
-  bitwriter
-  codegen
-  instrumentation
-  ipo
-  linker
-  selectiondag
+  clangCodeGen
+  clangFrontendTool
   )
 
 add_clang_executable(clang
