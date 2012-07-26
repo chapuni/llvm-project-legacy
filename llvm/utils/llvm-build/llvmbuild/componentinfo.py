@@ -186,6 +186,12 @@ class LibraryComponentInfo(ComponentInfo):
         if basename in ('gtest', 'gtest_main'):
             return basename
 
+        if basename.startswith('lib'):
+            return basename
+
+        if basename.startswith('clang'):
+            return basename
+
         return 'LLVM%s' % basename
 
     def get_llvmconfig_component_name(self):
