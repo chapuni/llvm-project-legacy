@@ -26,8 +26,3 @@ add_dependencies(clangAnalysis
   ClangDeclNodes
   ClangStmtNodes
   )
-
-target_link_libraries(clangAnalysis
-  clangBasic
-  clangAST
-  )

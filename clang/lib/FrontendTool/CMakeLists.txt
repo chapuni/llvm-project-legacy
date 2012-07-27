@@ -7,14 +7,3 @@ add_dependencies(clangFrontendTool
   ClangDiagnosticFrontend
   ClangDriverOptions
   )
-
-target_link_libraries(clangFrontendTool
-  clangDriver
-  clangFrontend
-  clangRewrite
-  clangCodeGen
-  clangStaticAnalyzerFrontend
-  clangStaticAnalyzerCheckers
-  clangStaticAnalyzerCore
-  clangARCMigrate
-  )

@@ -1,13 +1,3 @@
-set(LLVM_LINK_COMPONENTS
-  asmparser
-  bitreader
-  bitwriter
-  instrumentation
-  ipo
-  linker
-  vectorize
-  )
-
 add_clang_library(clangCodeGen
   BackendUtil.cpp
   CGBlocks.cpp
@@ -60,10 +50,4 @@ add_dependencies(clangCodeGen
   ClangDiagnosticFrontend
   ClangStmtNodes
   intrinsics_gen
-  )
-
-target_link_libraries(clangCodeGen
-  clangBasic
-  clangAST
-  clangFrontend
   )

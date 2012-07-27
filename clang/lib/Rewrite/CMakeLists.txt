@@ -24,10 +24,3 @@ add_dependencies(clangRewrite
   ClangDiagnosticFrontend
   ClangStmtNodes
   )
-
-target_link_libraries(clangRewrite
-  clangBasic
-  clangAST
-  clangParse
-  clangFrontend
-  )

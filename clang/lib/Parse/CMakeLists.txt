@@ -25,10 +25,3 @@ add_dependencies(clangParse
   ClangDiagnosticParse
   ClangStmtNodes
   )
-
-target_link_libraries(clangParse
-  clangBasic
-  clangAST
-  clangLex
-  clangSema
-  )

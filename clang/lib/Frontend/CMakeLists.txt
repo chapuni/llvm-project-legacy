@@ -45,14 +45,3 @@ add_dependencies(clangFrontend
   ClangDriverOptions
   ClangStmtNodes
   )
-
-target_link_libraries(clangFrontend
-  clangAST
-  clangBasic
-  clangDriver
-  clangEdit
-  clangLex
-  clangParse
-  clangSema
-  clangSerialization
-  )

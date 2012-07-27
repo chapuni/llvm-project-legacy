@@ -12,9 +12,3 @@ add_dependencies(clangEdit
   ClangDiagnosticCommon
   ClangStmtNodes
   )
-
-target_link_libraries(clangEdit
-  clangBasic
-  clangAST
-  clangLex
-  )

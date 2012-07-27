@@ -24,7 +24,3 @@ add_dependencies(clangDriver
   ClangDiagnosticDriver
   ClangDriverOptions
   )
-
-target_link_libraries(clangDriver
-  clangBasic
-  )

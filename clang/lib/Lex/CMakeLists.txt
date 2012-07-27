@@ -1,7 +1,5 @@
 # TODO: Add -maltivec when ARCH is PowerPC.
 
-set(LLVM_LINK_COMPONENTS support)
-
 add_clang_library(clangLex
   HeaderMap.cpp
   HeaderSearch.cpp
@@ -30,8 +28,4 @@ add_dependencies(clangLex
   ClangAttrSpellings
   ClangDiagnosticCommon
   ClangDiagnosticLex
-  )
-
-target_link_libraries(clangLex
-  clangBasic
   )

@@ -10,27 +10,6 @@ add_clang_executable(clang
   cc1as_main.cpp
   )
 
-target_link_libraries(clang
-  clangFrontendTool
-  clangAST
-  clangAnalysis
-  clangBasic
-  clangCodeGen
-  clangDriver
-  clangEdit
-  clangFrontend
-  clangLex
-  clangParse
-  clangEdit
-  clangARCMigrate
-  clangRewrite
-  clangSema
-  clangSerialization
-  clangStaticAnalyzerFrontend
-  clangStaticAnalyzerCheckers
-  clangStaticAnalyzerCore
-  )
-
 set_target_properties(clang PROPERTIES VERSION ${CLANG_EXECUTABLE_VERSION})
 
 add_dependencies(clang clang-headers)

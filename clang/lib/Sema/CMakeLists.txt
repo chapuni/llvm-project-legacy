@@ -58,11 +58,3 @@ add_dependencies(clangSema
   ClangDiagnosticSema
   ClangStmtNodes
   )
-
-target_link_libraries(clangSema
-  clangAST
-  clangAnalysis
-  clangBasic
-  clangEdit
-  clangLex
-  )

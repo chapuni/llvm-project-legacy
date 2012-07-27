@@ -1,5 +1,3 @@
-set(LLVM_LINK_COMPONENTS mc)
-
 add_clang_library(clangBasic
   Builtins.cpp
   ConvertUTF.c

@@ -17,12 +17,3 @@ add_dependencies(clangStaticAnalyzerFrontend
   ClangDiagnosticFrontend
   ClangStmtNodes
   )
-
-target_link_libraries(clangStaticAnalyzerFrontend
-  clangBasic
-  clangLex
-  clangAST
-  clangFrontend
-  clangRewrite
-  clangStaticAnalyzerCheckers
-  )

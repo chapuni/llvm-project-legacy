@@ -15,11 +15,6 @@ add_dependencies(PrintFunctionNames
   ClangStmtNodes
   )
 
-target_link_libraries(PrintFunctionNames
-  clangFrontend
-  clangAST
-  )
-
 set_target_properties(PrintFunctionNames
   PROPERTIES
   LINKER_LANGUAGE CXX

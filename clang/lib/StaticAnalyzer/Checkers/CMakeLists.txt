@@ -78,9 +78,3 @@ add_dependencies(clangStaticAnalyzerCheckers
   ClangStmtNodes
   ClangSACheckers
   )
-
-target_link_libraries(clangStaticAnalyzerCheckers
-  clangBasic
-  clangAST
-  clangStaticAnalyzerCore
-  )

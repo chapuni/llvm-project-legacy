@@ -31,11 +31,3 @@ add_dependencies(clangARCMigrate
   ClangDiagnosticSema
   ClangStmtNodes
   )
-
-target_link_libraries(clangARCMigrate
-  clangBasic
-  clangAST
-  clangParse
-  clangFrontend
-  clangRewrite
-  )

@@ -26,7 +26,3 @@ add_dependencies(clangSerialization
   ClangDiagnosticSerialization
   ClangStmtNodes
   )
-
-target_link_libraries(clangSerialization
-  clangSema
-  )

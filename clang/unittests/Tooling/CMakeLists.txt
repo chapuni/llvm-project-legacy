@@ -11,9 +11,3 @@ add_clang_unittest(ToolingTests
   RewriterTest.cpp
   RefactoringCallbacksTest.cpp
   )
-
-target_link_libraries(ToolingTests
-  clangAST
-  clangTooling
-  clangRewrite
-  )

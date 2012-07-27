@@ -15,13 +15,6 @@ add_dependencies(diagtool
   ClangDiagnosticIndexName
   )
 
-target_link_libraries(diagtool
-  clangBasic
-  clangLex
-  clangSema
-  clangFrontend
-  )
-
 if(UNIX)
   set(CLANGXX_LINK_OR_COPY create_symlink)
 else()

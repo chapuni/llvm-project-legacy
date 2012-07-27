@@ -1,5 +1,3 @@
-set(LLVM_LINK_COMPONENTS support)
-
 add_clang_library(clangTooling
   ArgumentsAdjusters.cpp
   CommandLineClangTool.cpp
@@ -16,12 +14,4 @@ add_dependencies(clangTooling
   ClangDiagnosticCommon
   ClangDiagnosticFrontend
   ClangStmtNodes
-  )
-
-target_link_libraries(clangTooling
-  clangBasic
-  clangFrontend
-  clangAST
-  clangASTMatchers
-  clangRewrite
   )

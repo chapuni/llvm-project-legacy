@@ -15,10 +15,6 @@ add_dependencies(SampleAnalyzerPlugin
   ClangStmtNodes
   )
 
-target_link_libraries(SampleAnalyzerPlugin
-  clangStaticAnalyzerCore
-  )
-
 set_target_properties(SampleAnalyzerPlugin
   PROPERTIES
   LINKER_LANGUAGE CXX

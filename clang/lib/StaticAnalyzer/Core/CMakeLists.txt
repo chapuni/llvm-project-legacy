@@ -1,5 +1,3 @@
-set(LLVM_LINK_COMPONENTS support)
-
 add_clang_library(clangStaticAnalyzerCore
   AnalysisManager.cpp
   APSIntType.cpp
@@ -47,12 +45,4 @@ add_dependencies(clangStaticAnalyzerCore
   ClangDeclNodes
   ClangDiagnosticCommon
   ClangStmtNodes
-  )
-
-target_link_libraries(clangStaticAnalyzerCore
-  clangBasic
-  clangLex
-  clangAST
-  clangFrontend
-  clangRewrite
   )
