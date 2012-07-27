@@ -1,0 +1,9 @@
+;===- ./tools/LLVMBuild.txt ------------------------------------*- Conf -*--===
+
+[common]
+subdirectories = ARCMigrate AST ASTMatchers Analysis Basic CodeGen Driver Edit Frontend FrontendTool Lex Parse Rewrite Sema Serialization StaticAnalyzer Tooling
+
+[component_0]
+type = Group
+name = ClangLibraries
+parent = ClangRoot

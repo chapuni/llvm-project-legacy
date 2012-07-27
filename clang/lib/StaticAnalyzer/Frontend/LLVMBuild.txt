@@ -1,0 +1,6 @@
+;===- ./tools/LLVMBuild.txt ------------------------------------*- Conf -*--===
+
+[component_0]
+type = Library
+name = clangStaticAnalyzerFrontend
+required_libraries = clangFrontend clangStaticAnalyzerCheckers

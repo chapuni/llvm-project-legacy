@@ -1,0 +1,9 @@
+;===- ./tools/LLVMBuild.txt ------------------------------------*- Conf -*--===
+
+[common]
+subdirectories = libclang
+
+[component_0]
+type = Group
+name = ClangTools
+parent = ClangRoot

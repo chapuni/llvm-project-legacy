@@ -1,0 +1,9 @@
+;===- ./tools/LLVMBuild.txt ------------------------------------*- Conf -*--===
+
+[common]
+subdirectories = Core Checkers Frontend
+
+[component_0]
+type = Group
+name = StaticAnalyzers
+parent = ClangLibraries

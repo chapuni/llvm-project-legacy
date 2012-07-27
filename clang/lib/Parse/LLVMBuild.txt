@@ -1,0 +1,6 @@
+;===- ./tools/LLVMBuild.txt ------------------------------------*- Conf -*--===
+
+[component_0]
+type = Library
+name = clangParse
+required_libraries = clangSema

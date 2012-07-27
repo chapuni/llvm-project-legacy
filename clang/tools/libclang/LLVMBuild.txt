@@ -1,0 +1,4 @@
+[component_0]
+type = Library
+name = libclang
+required_libraries = clangARCMigrate clangTooling
