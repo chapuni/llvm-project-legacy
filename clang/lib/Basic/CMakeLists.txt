@@ -35,7 +35,6 @@ endif()
 
 add_dependencies(clangBasic
   ClangARMNeon
-  ClangAttrList
   ClangDiagnosticAnalysis
   ClangDiagnosticAST
   ClangDiagnosticComment
@@ -43,7 +42,6 @@ add_dependencies(clangBasic
   ClangDiagnosticDriver
   ClangDiagnosticFrontend
   ClangDiagnosticGroups
-  ClangDiagnosticIndexName
   ClangDiagnosticLex
   ClangDiagnosticParse
   ClangDiagnosticSema

@@ -22,7 +22,6 @@ add_dependencies(clangSerialization
   ClangCommentNodes
   ClangDeclNodes
   ClangDiagnosticCommon
-  ClangDiagnosticLex
   ClangDiagnosticSema
   ClangDiagnosticSerialization
   ClangStmtNodes

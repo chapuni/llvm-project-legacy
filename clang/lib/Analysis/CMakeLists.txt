@@ -24,7 +24,6 @@ add_dependencies(clangAnalysis
   ClangCommentNodes
   ClangDiagnosticCommon
   ClangDeclNodes
-  ClangDiagnosticAnalysis
   ClangStmtNodes
   )
 

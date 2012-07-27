@@ -8,7 +8,6 @@ add_clang_library(clangASTMatchers
 
 add_dependencies(clangASTMatchers
   ClangAttrClasses
-  ClangAttrImpl
   ClangAttrList
   ClangCommentNodes
   ClangDeclNodes
