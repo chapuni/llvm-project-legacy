@@ -484,8 +484,15 @@ Type *getRegType(tree type) {
     debug_tree(type);
     llvm_unreachable("Unknown FP type!");
 
-  case VECTOR_TYPE:
-    return VectorType::get(getRegType(TREE_TYPE(type)), TYPE_VECTOR_SUBPARTS(type));
+  case VECTOR_TYPE: {
+    // LLVM does not support vectors of pointers, so turn any pointers into
+    // integers. <-- This isn't true since at least 3.1 as far as I know - MicahV
+    // FIXME     ^-- Yes, but does it work reliably? - Duncan
+    Type *EltTy = isa<ACCESS_TYPE>(TREE_TYPE(type)) ?
+      getDataLayout().getIntPtrType(Context, TYPE_ADDR_SPACE(TREE_TYPE(type))) :
+      getRegType(TREE_TYPE(type));
+    return VectorType::get(EltTy, TYPE_VECTOR_SUBPARTS(type));
+  }
 
   }
 }
@@ -1239,11 +1246,6 @@ static Type *ConvertRecordTypeRecursive(tree type) {
   return STy;
 }
 
-static Type *ConvertVectorTypeRecursive(tree type) {
-  Type *EltTy = ConvertType(TREE_TYPE(type));
-  return VectorType::get(EltTy, TYPE_VECTOR_SUBPARTS(type));
-}
-
 /// mayRecurse - Return true if converting this type may require breaking a
 /// self-referential type loop.  For example, converting the struct type
 ///   struct S;
@@ -1276,15 +1278,14 @@ static bool mayRecurse(tree type) {
     return false;
 
   case COMPLEX_TYPE:
-    // Converting this type does involve converting another type, however that
-    // conversion cannot refer back to the initial type.
-    return false;
-
   case VECTOR_TYPE:
-    // If this is a vector of pointers then the pointer could refer back to the
-    // vector, but this can only cause recursion if the vector was not converted
-    // yet.
-    return isa<ACCESS_TYPE>(TREE_TYPE(type)) && getCachedType(type) == 0;
+    // Converting these types does involve converting another type, however that
+    // conversion cannot refer back to the initial type.
+    // NOTE: GCC supports vectors of pointers, and the pointer could refer back
+    // to the vector.  However as LLVM does not support vectors of pointers we
+    // don't convert the pointer type and just use an integer instead, so as far
+    // as we are concerned such vector types are not self-referential.
+    return false;
 
   case ARRAY_TYPE:
   case FUNCTION_TYPE:
@@ -1372,9 +1373,6 @@ static Type *ConvertTypeRecursive(tree type) {
   case UNION_TYPE:
   case QUAL_UNION_TYPE:
     return RememberTypeConversion(type, ConvertRecordTypeRecursive(type));
-
-  case VECTOR_TYPE:
-    return RememberTypeConversion(type, ConvertVectorTypeRecursive(type));
   }
 }
 
@@ -1414,8 +1412,7 @@ static Type *ConvertTypeNonRecursive(tree type) {
   }
 
   case COMPLEX_TYPE: {
-    if (Type *Ty = getCachedType(type))
-      return CheckTypeConversion(type, Ty);
+    if (Type *Ty = getCachedType(type)) return Ty;
     Type *Ty = ConvertTypeNonRecursive(main_type(type));
     Ty = StructType::get(Ty, Ty, NULL);
     return RememberTypeConversion(type, Ty);
@@ -1461,10 +1458,15 @@ static Type *ConvertTypeNonRecursive(tree type) {
                                                      getDescriptiveName(type)));
 
   case VECTOR_TYPE: {
-    if (Type *Ty = getCachedType(type))
-      return CheckTypeConversion(type, Ty);
-    assert(!isa<ACCESS_TYPE>(TREE_TYPE(type)) && "Type not already converted!");
-    Type *Ty = ConvertTypeNonRecursive(main_type(type));
+    if (Type *Ty = getCachedType(type)) return Ty;
+    Type *Ty;
+    // LLVM does not support vectors of pointers, so turn any pointers into
+    // integers.
+    if (isa<ACCESS_TYPE>(TREE_TYPE(type)))
+      Ty = getDataLayout().getIntPtrType(Context,
+                                         TYPE_ADDR_SPACE(TREE_TYPE(type)));
+    else
+      Ty = ConvertTypeNonRecursive(main_type(type));
     Ty = VectorType::get(Ty, TYPE_VECTOR_SUBPARTS(type));
     return RememberTypeConversion(type, Ty);
   }

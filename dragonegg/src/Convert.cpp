@@ -459,10 +459,16 @@ static Value *LoadRegisterFromMemory(MemRef Loc, tree type, MDNode *AliasTag,
     }
     // Otherwise, load the vector component by component.
     Value *Res = UndefValue::get(RegTy);
+    bool isVectorOfPointers = isa<PointerType>(EltRegTy);
     unsigned Stride = GET_MODE_SIZE(TYPE_MODE(elt_type));
+    Type *IntPtrTy = getDataLayout().getIntPtrType(EltRegTy);
     for (unsigned i = 0; i != NumElts; ++i) {
       Value *Idx = Builder.getInt32(i);
       Value *Elt = LoadRegisterFromMemory(Loc, elt_type, AliasTag, Builder);
+      // LLVM does not support vectors of pointers, so turn any pointers into
+      // integers.
+      if (isVectorOfPointers)
+        Elt = Builder.CreatePtrToInt(Elt, IntPtrTy);
       Res = Builder.CreateInsertElement(Res, Elt, Idx);
       if (i + 1 != NumElts)
         Loc = DisplaceLocationByUnits(Loc, Stride, Builder);
@@ -2894,6 +2900,10 @@ Value *TreeToLLVM::EmitCONSTRUCTOR(tree exp, const MemRef *DestLoc) {
           BuildVecOps.push_back(Builder.CreateExtractElement(Elt, Index));
         }
       } else {
+        // LLVM does not support vectors of pointers, so turn any pointers into
+        // integers.
+        if (isa<PointerType>(Elt->getType()))
+          Elt = Builder.CreatePtrToInt(Elt, DL.getIntPtrType(Elt->getType()));
         assert(Elt->getType() == VTy->getElementType() &&
                "Unexpected type for vector constructor!");
         BuildVecOps.push_back(Elt);
@@ -6598,8 +6608,16 @@ Constant *TreeToLLVM::EmitVectorRegisterConstant(tree reg) {
 
   // Convert the elements.
   SmallVector<Constant*, 16> Elts;
-  for (tree elt = TREE_VECTOR_CST_ELTS(reg); elt; elt = TREE_CHAIN(elt))
-    Elts.push_back(EmitRegisterConstant(TREE_VALUE(elt)));
+  for (tree elt = TREE_VECTOR_CST_ELTS(reg); elt; elt = TREE_CHAIN(elt)) {
+    Constant *Elt = EmitRegisterConstant(TREE_VALUE(elt));
+    // LLVM does not support vectors of pointers, so turn any pointers into
+    // integers.
+    if (isa<PointerType>(Elt->getType())) {
+      Type *IntTy = getDataLayout().getIntPtrType(Elt->getType());
+      Elt = Builder.getFolder().CreatePtrToInt(Elt, IntTy);
+    }
+    Elts.push_back(Elt);
+  }
 
   // If there weren't enough elements then set the rest of the vector to the
   // default value.
