@@ -6607,7 +6607,10 @@ Constant *TreeToLLVM::EmitVectorRegisterConstant(tree reg) {
     return getDefaultValue(getRegType(TREE_TYPE(reg)));
 
   // Convert the elements.
+  VectorType *ResTy = cast<VectorType>(getRegType(TREE_TYPE(reg)));
+  Type *ResEltTy = ResTy->getElementType();
   SmallVector<Constant*, 16> Elts;
+  bool DstIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_TYPE(reg)));
   for (tree elt = TREE_VECTOR_CST_ELTS(reg); elt; elt = TREE_CHAIN(elt)) {
     Constant *Elt = EmitRegisterConstant(TREE_VALUE(elt));
     // LLVM does not support vectors of pointers, so turn any pointers into
@@ -6615,6 +6618,13 @@ Constant *TreeToLLVM::EmitVectorRegisterConstant(tree reg) {
     if (isa<PointerType>(Elt->getType())) {
       Type *IntTy = getDataLayout().getIntPtrType(Elt->getType());
       Elt = Builder.getFolder().CreatePtrToInt(Elt, IntTy);
+    }
+    // Make any implicit type conversions explicit.
+    if (Elt->getType() != ResEltTy) {
+      bool SrcIsSigned = !TYPE_UNSIGNED(TREE_TYPE(TREE_VALUE(elt)));
+      Instruction::CastOps opcode =
+        CastInst::getCastOpcode(Elt, SrcIsSigned, ResEltTy, DstIsSigned);
+      Elt = TheFolder->CreateCast(opcode, Elt, ResEltTy);
     }
     Elts.push_back(Elt);
   }
