@@ -42,8 +42,8 @@ COMMON_FLAGS+=-DENABLE_LLVM_PLUGINS
 else
 COMMON_FLAGS+=-fvisibility=hidden
 endif
-CFLAGS+=$(COMMON_FLAGS) $(shell $(LLVM_CONFIG) --cflags)
-CXXFLAGS+=$(COMMON_FLAGS) $(shell $(LLVM_CONFIG) --cxxflags)
+CFLAGS+=$(COMMON_FLAGS) $(shell $(LLVM_CONFIG) --cflags | sed -e 's/-Wcovered-switch-default//')
+CXXFLAGS+=$(COMMON_FLAGS) $(shell $(LLVM_CONFIG) --cxxflags | sed -e 's/-Wcovered-switch-default//')
 
 ifeq ($(shell uname),Darwin)
 LOADABLE_MODULE_OPTIONS=-bundle -undefined dynamic_lookup
@@ -76,7 +76,7 @@ TARGET_UTIL=./TargetInfo
 
 ALL_OBJECTS=$(PLUGIN_OBJECTS) $(TARGET_OBJECT) $(TARGET_UTIL_OBJECTS)
 
-CPP_OPTIONS+=$(CPPFLAGS) $(shell $(LLVM_CONFIG) --cppflags) \
+CPP_OPTIONS+=$(CPPFLAGS) $(shell $(LLVM_CONFIG) --cppflags | sed -e 's/-Wcovered-switch-default//') \
 	     -fno-rtti \
 	     -MD -MP \
 	     -DIN_GCC -DLLVM_VERSION=\"$(LLVM_VERSION)\" \
