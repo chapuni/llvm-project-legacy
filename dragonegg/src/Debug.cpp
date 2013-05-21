@@ -231,7 +231,7 @@ StringRef DebugInfo::getFunctionName(tree FnDecl) {
 
 /// EmitFunctionStart - Constructs the debug code for entering a function.
 void DebugInfo::EmitFunctionStart(tree FnDecl, Function *Fn) {
-  DIType FNType = getOrCreateType(TREE_TYPE(FnDecl));
+  DIType FNType = getOrCreateType(TYPE_MAIN_VARIANT(TREE_TYPE(FnDecl)));
 
   unsigned lineno = CurLineNo;
 
@@ -844,7 +844,7 @@ DIType DebugInfo::createStructType(tree type) {
   return RealDecl;
 }
 
-/// createVarinatType - Create variant type or return MainTy.
+/// createVariantType - Create variant type or return MainTy.
 DIType DebugInfo::createVariantType(tree type, DIType MainTy) {
 
   DIType Ty;
@@ -885,7 +885,7 @@ DIType DebugInfo::createVariantType(tree type, DIType MainTy) {
     return Ty;
   }
 
-  // If, for some reason, main type varaint type is seen then use it.
+  // If, for some reason, main type variant type is seen then use it.
   return MainTy;
 }
 
