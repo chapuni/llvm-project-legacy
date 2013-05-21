@@ -156,6 +156,33 @@ static FunctionPassManager *CodeGenPasses = 0;
 static void createPerFunctionOptimizationPasses();
 static void createPerModuleOptimizationPasses();
 
+// Compatibility hacks for older versions of GCC.
+#if (GCC_MINOR < 8)
+
+static struct cgraph_node *cgraph_symbol(struct cgraph_node *N) { return N; }
+static struct varpool_node *varpool_symbol(struct varpool_node *N) { return N; }
+
+#define ipa_ref_list_referring_iterate(L,I,P) \
+  ipa_ref_list_refering_iterate(L,I,P)
+#define ipa_ref_referring_node(R) ipa_ref_refering_node(R)
+#define ipa_ref_referring_varpool_node(R) ipa_ref_refering_varpool_node(R)
+
+#define asm_nodes cgraph_asm_nodes
+#define asm_node cgraph_asm_node
+
+#define FOR_EACH_FUNCTION(node) \
+  for ((node) = cgraph_nodes; (node); (node) = (node)->next)
+
+#define FOR_EACH_VARIABLE(node) \
+  for ((node) = varpool_nodes; (node); (node) = (node)->next)
+
+#else
+
+static symtab_node_base *cgraph_symbol(cgraph_node *N) { return &N->symbol; }
+static symtab_node_base *varpool_symbol(varpool_node *N) { return &N->symbol; }
+
+#endif
+
 //===----------------------------------------------------------------------===//
 //                   Matching LLVM Values with GCC DECL trees
 //===----------------------------------------------------------------------===//
@@ -498,31 +525,44 @@ static void CreateTargetMachine(const std::string &TargetTriple) {
   TheTarget->setMCUseDwarfDirectory(false);
 }
 
+/// output_ident - Insert a .ident directive that identifies the plugin.
+static void output_ident(const char *ident_str) {
+  const char *ident_asm_op = "\t.ident\t";
+#if (GCC_MINOR < 8)
+#ifdef IDENT_ASM_OP
+  ident_asm_op = IDENT_ASM_OP;
+#endif
+#endif
+  std::string Directive(ident_asm_op);
+  Directive += "\"";
+  Directive += ident_str;
+  Directive += " LLVM: ";
+  Directive += LLVM_VERSION;
+  Directive += "\"";
+  TheModule->setModuleInlineAsm(Directive);
+}
+
 /// CreateModule - Create and initialize a module to output LLVM IR to.
 static void CreateModule(const std::string &TargetTriple) {
   // Create the module itself.
   StringRef ModuleID = main_input_filename ? main_input_filename : "";
   TheModule = new Module(ModuleID, getGlobalContext());
 
-// Insert a special .ident directive to identify the version of the plugin
-// which compiled this code.  The format of the .ident string is patterned
-// after the ones produced by GCC.
+#if (GCC_MINOR < 8)
 #ifdef IDENT_ASM_OP
   if (!flag_no_ident) {
+    std::string IdentString;
     const char *pkg_version = "(GNU) ";
 
     if (strcmp("(GCC) ", pkgversion_string))
       pkg_version = pkgversion_string;
 
-    std::string IdentString = IDENT_ASM_OP;
-    IdentString += "\"GCC: ";
+    IdentString += "GCC: ";
     IdentString += pkg_version;
     IdentString += version_string;
-    IdentString += " LLVM: ";
-    IdentString += LLVM_VERSION;
-    IdentString += "\"";
-    TheModule->setModuleInlineAsm(IdentString);
+    output_ident(IdentString.c_str());
   }
+#endif
 #endif
 
   // Install information about the target triple and data layout into the module
@@ -900,9 +940,9 @@ static void emit_alias(tree decl, tree target) {
 
   if (isa<IDENTIFIER_NODE>(target)) {
     if (struct cgraph_node *fnode = cgraph_node_for_asm(target))
-      target = fnode->decl;
+      target = cgraph_symbol(fnode)->decl;
     else if (struct varpool_node *vnode = varpool_node_for_asm(target))
-      target = vnode->decl;
+      target = varpool_symbol(vnode)->decl;
   }
 
   GlobalValue *Aliasee = 0;
@@ -968,10 +1008,12 @@ static void emit_varpool_aliases(struct varpool_node *node) {
     emit_alias(alias->decl, node->decl);
 #else
   struct ipa_ref *ref;
-  for (int i = 0; ipa_ref_list_refering_iterate(&node->ref_list, i, ref); i++)
+  for (int i = 0;
+       ipa_ref_list_referring_iterate(&varpool_symbol(node)->ref_list, i, ref);
+       i++)
     if (ref->use == IPA_REF_ALIAS) {
-      struct varpool_node *alias = ipa_ref_refering_varpool_node(ref);
-      emit_alias(alias->decl, alias->alias_of);
+      struct varpool_node *alias = ipa_ref_referring_varpool_node(ref);
+      emit_alias(varpool_symbol(alias)->decl, alias->alias_of);
       emit_varpool_aliases(alias);
     }
 #endif
@@ -1147,7 +1189,9 @@ static void emit_global(tree decl) {
   assert(SizeOfGlobalMatchesDecl(GV, decl) && "Global has wrong size!");
 
   // Mark the global as written so gcc doesn't waste time outputting it.
+#if (GCC_MINOR < 8)
   TREE_ASM_WRITTEN(decl) = 1;
+#endif
 
   // Output any associated aliases.
   if (isa<VAR_DECL>(decl))
@@ -1580,6 +1624,12 @@ static void llvm_start_unit(void */*gcc_data*/, void */*user_data*/) {
   // Ensure that GCC doesn't decorate stdcall and fastcall function names:
   // LLVM codegen takes care of this, and we don't want them decorated twice.
   targetm.mangle_decl_assembler_name = default_mangle_decl_assembler_name;
+
+#if (GCC_MINOR > 7)
+  // Arrange for a special .ident directive identifying the compiler and plugin
+  // versions to be inserted into the final assembler.
+  targetm.asm_out.output_ident = output_ident;
+#endif
 }
 
 /// emit_cgraph_aliases - Output any aliases associated with the given cgraph
@@ -1599,10 +1649,12 @@ static void emit_cgraph_aliases(struct cgraph_node *node) {
   // for thunks to be output as functions and thus visit thunk aliases when the
   // thunk function is output.
   struct ipa_ref *ref;
-  for (int i = 0; ipa_ref_list_refering_iterate(&node->ref_list, i, ref); i++)
+  for (int i = 0;
+       ipa_ref_list_referring_iterate(&cgraph_symbol(node)->ref_list, i, ref);
+       i++)
     if (ref->use == IPA_REF_ALIAS) {
-      struct cgraph_node *alias = ipa_ref_refering_node(ref);
-      emit_alias(alias->decl, alias->thunk.alias);
+      struct cgraph_node *alias = ipa_ref_referring_node(ref);
+      emit_alias(cgraph_symbol(alias)->decl, alias->thunk.alias);
       emit_cgraph_aliases(alias);
     }
 #endif
@@ -1645,8 +1697,15 @@ static unsigned int rtl_emit_function(void) {
     emit_current_function();
   }
 
-  // Free any data structures.
+  // Free tree-ssa data structures.
+#if (GCC_MINOR < 8)
   execute_free_datastructures();
+#else
+  free_dominance_info(CDI_DOMINATORS);
+  free_dominance_info(CDI_POST_DOMINATORS);
+  // And get rid of annotations we no longer need.
+  delete_tree_cfg_annotations();
+#endif
 
   // Finally, we have written out this function!
   TREE_ASM_WRITTEN(current_function_decl) = 1;
@@ -1656,6 +1715,9 @@ static unsigned int rtl_emit_function(void) {
 /// pass_rtl_emit_function - RTL pass that converts a function to LLVM IR.
 static struct rtl_opt_pass pass_rtl_emit_function = { {
   RTL_PASS, "rtl_emit_function",         /* name */
+#if (GCC_MINOR >= 8)
+  OPTGROUP_NONE,                         /* optinfo_flags */
+#endif
   NULL,                                  /* gate */
   rtl_emit_function,                     /* execute */
   NULL,                                  /* sub */
@@ -1671,14 +1733,14 @@ static struct rtl_opt_pass pass_rtl_emit_function = { {
 
 /// emit_file_scope_asms - Output any file-scope assembly.
 static void emit_file_scope_asms() {
-  for (struct cgraph_asm_node *can = cgraph_asm_nodes; can; can = can->next) {
-    tree string = can->asm_str;
+  for (struct asm_node *anode = asm_nodes; anode; anode = anode->next) {
+    tree string = anode->asm_str;
     if (isa<ADDR_EXPR>(string))
       string = TREE_OPERAND(string, 0);
     TheModule->appendModuleInlineAsm(TREE_STRING_POINTER(string));
   }
   // Remove the asms so gcc doesn't waste time outputting them.
-  cgraph_asm_nodes = NULL;
+  asm_nodes = NULL;
 }
 
 #if (GCC_MINOR > 6)
@@ -1691,27 +1753,35 @@ static tree get_alias_symbol(tree decl) {
 /// emit_cgraph_weakrefs - Output any cgraph weak references to external
 /// declarations.
 static void emit_cgraph_weakrefs() {
-  for (struct cgraph_node *node = cgraph_nodes; node; node = node->next)
-    if (node->alias && DECL_EXTERNAL(node->decl) &&
-        lookup_attribute("weakref", DECL_ATTRIBUTES(node->decl)))
-      emit_alias(node->decl, node->thunk.alias ? node->thunk.alias
-                                               : get_alias_symbol(node->decl));
+  struct cgraph_node *node;
+  FOR_EACH_FUNCTION(node)
+    if (node->alias && DECL_EXTERNAL(cgraph_symbol(node)->decl) &&
+        lookup_attribute("weakref", DECL_ATTRIBUTES(cgraph_symbol(node)->decl)))
+      emit_alias(cgraph_symbol(node)->decl, node->thunk.alias ?
+                 node->thunk.alias :
+                 get_alias_symbol(cgraph_symbol(node)->decl));
 }
 
 /// emit_varpool_weakrefs - Output any varpool weak references to external
 /// declarations.
 static void emit_varpool_weakrefs() {
-  for (struct varpool_node *vnode = varpool_nodes; vnode; vnode = vnode->next)
-    if (vnode->alias && DECL_EXTERNAL(vnode->decl) &&
-        lookup_attribute("weakref", DECL_ATTRIBUTES(vnode->decl)))
-      emit_alias(vnode->decl, vnode->alias_of ? vnode->alias_of
-                                              : get_alias_symbol(vnode->decl));
+  struct varpool_node *vnode;
+  FOR_EACH_VARIABLE(vnode)
+    if (vnode->alias && DECL_EXTERNAL(varpool_symbol(vnode)->decl) &&
+        lookup_attribute("weakref",
+                         DECL_ATTRIBUTES(varpool_symbol(vnode)->decl)))
+      emit_alias(varpool_symbol(vnode)->decl, vnode->alias_of ? vnode->alias_of
+                 : get_alias_symbol(varpool_symbol(vnode)->decl));
 }
+#endif
+
+#if (GCC_MINOR < 8)
+INSTANTIATE_VECTOR(alias_pair);
 #endif
 
 /// llvm_emit_globals - Output GCC global variables, aliases and asm's to the
 /// LLVM IR.
-static void llvm_emit_globals(void */*gcc_data*/, void */*user_data*/) {
+static void llvm_emit_globals(void * /*gcc_data*/, void * /*user_data*/) {
   if (errorcount || sorrycount)
     return; // Do not process broken code.
 
@@ -1723,16 +1793,19 @@ static void llvm_emit_globals(void */*gcc_data*/, void */*user_data*/) {
   // Some global variables must be output even if unused, for example because
   // they are externally visible.  Output them now.  All other variables are
   // output when their user is, or discarded if unused.
-  for (struct varpool_node *vnode = varpool_nodes; vnode; vnode = vnode->next) {
+  struct varpool_node *vnode;
+  FOR_EACH_VARIABLE(vnode) {
     // If the node is explicitly marked as not being needed, then skip it.
+#if (GCC_MINOR < 8)
     if (!vnode->needed)
       continue;
+#endif
     // If the node is an alias then skip it - aliases are handled below.
     if (vnode->alias)
       continue;
 
     // If this variable must be output even if unused then output it.
-    tree decl = vnode->decl;
+    tree decl = varpool_symbol(vnode)->decl;
     if (vnode->analyzed &&
         (
 #if (GCC_MINOR > 5)
@@ -1763,9 +1836,12 @@ static void llvm_emit_globals(void */*gcc_data*/, void */*user_data*/) {
 
   // Emit any aliases that aren't represented in cgraph or varpool, for example
   // a function that aliases a variable or a variable that aliases a function.
-  alias_pair *p;
-  for (unsigned i = 0; VEC_iterate(alias_pair, alias_pairs, i, p); i++)
-    emit_alias(p->decl, p->target);
+  if (alias_pairs) {
+    alias_pair *p;
+    const vec<alias_pair, va_gc> &pairs = *alias_pairs;
+    for (unsigned i = 0; pairs.iterate(i, &p); i++)
+      emit_alias(p->decl, p->target);
+  }
 }
 
 static void InlineAsmDiagnosticHandler(const SMDiagnostic &D, void */*Data*/,
@@ -1921,6 +1997,9 @@ static bool gate_null(void) { return false; }
 /// pass_gimple_null - Gimple pass that does nothing.
 static struct gimple_opt_pass pass_gimple_null = { {
   GIMPLE_PASS, "*gimple_null", /* name */
+#if (GCC_MINOR >= 8)
+  OPTGROUP_NONE,               /* optinfo_flags */
+#endif
   gate_null,                   /* gate */
   NULL,                        /* execute */
   NULL,                        /* sub */
@@ -1949,6 +2028,9 @@ static bool gate_correct_state(void) { return true; }
 /// newly inserted functions are processed before being converted to LLVM IR.
 static struct gimple_opt_pass pass_gimple_correct_state = { {
   GIMPLE_PASS, "*gimple_correct_state", /* name */
+#if (GCC_MINOR >= 8)
+  OPTGROUP_NONE,                        /* optinfo_flags */
+#endif
   gate_correct_state,                   /* gate */
   execute_correct_state,                /* execute */
   NULL,                                 /* sub */
@@ -1965,6 +2047,9 @@ static struct gimple_opt_pass pass_gimple_correct_state = { {
 /// pass_ipa_null - IPA pass that does nothing.
 static struct ipa_opt_pass_d pass_ipa_null = {
   { IPA_PASS, "*ipa_null", /* name */
+#if (GCC_MINOR >= 8)
+    OPTGROUP_NONE,         /* optinfo_flags */
+#endif
     gate_null,             /* gate */
     NULL,                  /* execute */
     NULL,                  /* sub */
@@ -1994,6 +2079,9 @@ static struct ipa_opt_pass_d pass_ipa_null = {
 
 /// pass_rtl_null - RTL pass that does nothing.
 static struct rtl_opt_pass pass_rtl_null = { { RTL_PASS, "*rtl_null", /* name */
+#if (GCC_MINOR >= 8)
+                                               OPTGROUP_NONE,/* optinfo_flags */
+#endif
                                                gate_null,             /* gate */
                                                NULL,    /* execute */
                                                NULL,    /* sub */
@@ -2010,6 +2098,9 @@ static struct rtl_opt_pass pass_rtl_null = { { RTL_PASS, "*rtl_null", /* name */
 /// pass_simple_ipa_null - Simple IPA pass that does nothing.
 static struct simple_ipa_opt_pass pass_simple_ipa_null = { {
   SIMPLE_IPA_PASS, "*simple_ipa_null", /* name */
+#if (GCC_MINOR >= 8)
+  OPTGROUP_NONE,                       /* optinfo_flags */
+#endif
   gate_null,                           /* gate */
   NULL,                                /* execute */
   NULL,                                /* sub */
@@ -2254,12 +2345,14 @@ int __attribute__((visibility("default"))) plugin_init(
     pass_info.pos_op = PASS_POS_REPLACE;
     register_callback(plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
 
+#if (GCC_MINOR < 8)
     // Turn off pass_ipa_matrix_reorg.
     pass_info.pass = &pass_simple_ipa_null.pass;
     pass_info.reference_pass_name = "matrix-reorg";
     pass_info.ref_pass_instance_number = 0;
     pass_info.pos_op = PASS_POS_REPLACE;
     register_callback(plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
+#endif
 
     // Leave pass_ipa_tm.
 
@@ -2423,7 +2516,11 @@ int __attribute__((visibility("default"))) plugin_init(
   register_callback(plugin_name, PLUGIN_PASS_MANAGER_SETUP, NULL, &pass_info);
 
   // Turn off all other rtl passes.
+#if (GCC_MINOR < 8)
   pass_info.pass = &pass_gimple_null.pass;
+#else
+  pass_info.pass = &pass_rtl_null.pass;
+#endif
   pass_info.reference_pass_name = "*rest_of_compilation";
   pass_info.ref_pass_instance_number = 0;
   pass_info.pos_op = PASS_POS_REPLACE;

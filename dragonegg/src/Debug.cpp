@@ -153,7 +153,7 @@ static StringRef GetNodeName(tree Node) {
 /// whether the node is a TYPE or DECL.  UseStub is true if we should consider
 /// the type stub as the actually location (ignored in struct/unions/enums.)
 static expanded_location GetNodeLocation(tree Node, bool UseStub = true) {
-  expanded_location Location = { NULL, 0, 0, false };
+  expanded_location Location = {};
 
   if (Node == NULL_TREE)
     return Location;
@@ -625,7 +625,8 @@ DIType DebugInfo::createEnumType(tree type) {
 
   llvm::DIArray EltArray = Builder.getOrCreateArray(Elements);
 
-  expanded_location Loc = { NULL, 0, 0, false };
+  expanded_location Loc = {};
+
   if (TYPE_SIZE(type))
     // Incomplete enums do not  have any location info.
     Loc = GetNodeLocation(TREE_CHAIN(type), false);
@@ -705,8 +706,6 @@ DIType DebugInfo::createStructType(tree type) {
   llvm::SmallVector<Value*, 16> EltTys;
 
   if (tree binfo = TYPE_BINFO(type)) {
-    VEC(tree, gc) *accesses = BINFO_BASE_ACCESSES(binfo);
-
     for (unsigned i = 0, e = BINFO_N_BASE_BINFOS(binfo); i != e; ++i) {
       tree BInfo = BINFO_BASE_BINFO(binfo, i);
       tree BInfoType = BINFO_TYPE(BInfo);
@@ -714,8 +713,8 @@ DIType DebugInfo::createStructType(tree type) {
       unsigned BFlags = 0;
       if (BINFO_VIRTUAL_P(BInfo))
         BFlags = llvm::DIType::FlagVirtual;
-      if (accesses) {
-        tree access = VEC_index(tree, accesses, i);
+      if (BINFO_BASE_ACCESSES(binfo)) {
+        tree access = BINFO_BASE_ACCESS(binfo, i);
         if (access == access_protected_node)
           BFlags |= llvm::DIType::FlagProtected;
         else if (access == access_private_node)
