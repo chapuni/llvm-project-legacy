@@ -3,6 +3,8 @@
 // RUN: not %clang_cc1 -pedantic -fixit -x c %t
 // RUN: %clang_cc1 -pedantic -Werror -x c %t
 
+// REQUIRES: crash-recovery
+
 /* This is a test of the various code modification hints that are
    provided as part of warning or extension diagnostics. All of the
    warnings will be fixed by -fixit, and the resulting file should

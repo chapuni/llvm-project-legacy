@@ -26,3 +26,5 @@ int get() {
 }
 
 // CHECK-CPP11: no suitable precompiled header file found in directory
+
+// REQUIRES: crash-recovery
