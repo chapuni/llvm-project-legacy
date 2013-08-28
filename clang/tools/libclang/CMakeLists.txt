@@ -100,6 +100,12 @@ if( LLVM_ENABLE_PIC )
       INSTALL_NAME_DIR "@executable_path/../lib")
   endif()
 
+  # Workaround for Cygwin to emit the import library.
+  if (CYGWIN)
+    set_target_properties(libclang
+      PROPERTIES
+      LINK_FLAGS "-Wl,--out-implib -Wl,${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libclang.dll.a")
+  endif ()
 
   set(LIBCLANG_STATIC_TARGET_NAME libclang_static)
 else()
