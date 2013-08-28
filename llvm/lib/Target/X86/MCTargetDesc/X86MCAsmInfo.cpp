@@ -152,5 +152,7 @@ X86MCAsmInfoGNUCOFF::X86MCAsmInfoGNUCOFF(const Triple &Triple) {
   TextAlignFillValue = 0x90;
 
   // Exceptions handling
-  ExceptionsType = ExceptionHandling::DwarfCFI;
+  // FIXME: We might use Win64EH here.
+  if (Triple.getArch() != Triple::x86_64)
+    ExceptionsType = ExceptionHandling::DwarfCFI;
 }
