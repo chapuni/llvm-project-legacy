@@ -66,6 +66,9 @@ static bool isSuitableForBSS(const GlobalVariable *GV, bool NoZerosInBSS) {
   if (NoZerosInBSS)
     return false;
 
+  if (GV->hasLinkOnceLinkage())
+    return false;
+
   // Otherwise, put it in BSS!
   return true;
 }
@@ -212,6 +215,7 @@ SectionKind TargetLoweringObjectFile::getKindForGlobal(const GlobalValue *GV,
 
       // Otherwise, the dynamic linker needs to fix it up, put it in the
       // writable data.rel.local section.
+return SectionKind::getReadOnly();
       return SectionKind::getReadOnlyWithRelLocal();
 
     case Constant::GlobalRelocations:
@@ -225,6 +229,7 @@ SectionKind TargetLoweringObjectFile::getKindForGlobal(const GlobalValue *GV,
 
       // Otherwise, the dynamic linker needs to fix it up, put it in the
       // writable data.rel section.
+return SectionKind::getReadOnly();
       return SectionKind::getReadOnlyWithRel();
     }
   }
