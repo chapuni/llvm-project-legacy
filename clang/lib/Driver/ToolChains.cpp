@@ -1580,7 +1580,7 @@ bool Generic_GCC::IsUnwindTablesDefault() const {
 }
 
 bool Generic_GCC::isPICDefault() const {
-  return false;
+  return true;
 }
 
 bool Generic_GCC::isPIEDefault() const {

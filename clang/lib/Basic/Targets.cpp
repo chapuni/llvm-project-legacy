@@ -3317,6 +3317,30 @@ public:
 } // end anonymous namespace
 
 namespace {
+// x86-64 Cygwin target (LP64)
+class CygwinX86_64TargetInfo : public X86_64TargetInfo {
+public:
+  CygwinX86_64TargetInfo(const llvm::Triple &Triple)
+      : X86_64TargetInfo(Triple) {
+    TLSSupported = false;
+	assert(WCharType != UnsignedShort);
+    WCharType = UnsignedShort;
+	assert(LongWidth == 64);
+	assert(LongLongWidth == 64);
+	assert(LongLongAlign == 64);
+	assert(DoubleAlign == 64);
+    this->UserLabelPrefix = "";
+  }
+  virtual void getTargetDefines(const LangOptions &Opts,
+                                MacroBuilder &Builder) const {
+    X86_64TargetInfo::getTargetDefines(Opts, Builder);
+    Builder.defineMacro("__CYGWIN__");
+    //Builder.defineMacro("__CYGWIN32__");
+  }
+};
+} // end anonymous namespace
+
+namespace {
 // x86-64 MinGW target
 class MinGWX86_64TargetInfo : public WindowsX86_64TargetInfo {
 public:
@@ -5766,6 +5790,8 @@ static TargetInfo *AllocateTarget(const llvm::Triple &Triple) {
       return new KFreeBSDTargetInfo<X86_64TargetInfo>(Triple);
     case llvm::Triple::Solaris:
       return new SolarisTargetInfo<X86_64TargetInfo>(Triple);
+    case llvm::Triple::Cygwin:
+      return new CygwinX86_64TargetInfo(Triple);
     case llvm::Triple::MinGW32:
       return new MinGWX86_64TargetInfo(Triple);
     case llvm::Triple::Win32:   // This is what Triple.h supports now.
