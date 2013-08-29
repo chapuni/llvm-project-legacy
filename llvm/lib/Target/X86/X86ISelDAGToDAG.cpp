@@ -569,6 +569,8 @@ void X86DAGToDAGISel::EmitSpecialCodeForMain(MachineBasicBlock *BB,
       .addReg(X86::RDX, RegState::Define | RegState::Implicit)
       .addReg(X86::R8,  RegState::Define | RegState::Implicit)
       .addReg(X86::R9,  RegState::Define | RegState::Implicit)
+      .addReg(X86::R10, RegState::Define | RegState::Implicit)
+      .addReg(X86::R11, RegState::Define | RegState::Implicit)
       ;
   }
 }
