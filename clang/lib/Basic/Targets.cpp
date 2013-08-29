@@ -3337,6 +3337,9 @@ public:
     Builder.defineMacro("__CYGWIN__");
     //Builder.defineMacro("__CYGWIN32__");
   }
+  virtual BuiltinVaListKind getBuiltinVaListKind() const {
+    return TargetInfo::CharPtrBuiltinVaList;
+  }
 };
 } // end anonymous namespace
 
