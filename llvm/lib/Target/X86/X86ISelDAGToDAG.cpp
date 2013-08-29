@@ -562,7 +562,14 @@ void X86DAGToDAGISel::EmitSpecialCodeForMain(MachineBasicBlock *BB,
     unsigned CallOp =
       Subtarget->is64Bit() ? X86::CALL64pcrel32 : X86::CALLpcrel32;
     BuildMI(BB, DebugLoc(),
-            TII->get(CallOp)).addExternalSymbol("__main");
+            TII->get(CallOp))
+      .addExternalSymbol("__main")
+      .addReg(X86::RAX, RegState::Define | RegState::Implicit)
+      .addReg(X86::RCX, RegState::Define | RegState::Implicit)
+      .addReg(X86::RDX, RegState::Define | RegState::Implicit)
+      .addReg(X86::R8,  RegState::Define | RegState::Implicit)
+      .addReg(X86::R9,  RegState::Define | RegState::Implicit)
+      ;
   }
 }
 
