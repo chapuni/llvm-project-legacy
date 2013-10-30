@@ -111,7 +111,8 @@ def write_test_results(run, lit_config, testing_time, output_path):
 def main(builtinParameters = {}):
     # Use processes by default on Unix platforms.
     isWindows = platform.system() == 'Windows'
-    useProcessesIsDefault = not isWindows
+    isCyg64 = re.match("CYGWIN.+x86_64", platform.platform())
+    useProcessesIsDefault = not isWindows and not isCyg64
 
     global options
     from optparse import OptionParser, OptionGroup
