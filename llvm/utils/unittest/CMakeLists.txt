@@ -42,6 +42,12 @@ add_llvm_library(gtest
   googletest/src/gtest-all.cc
   )
 
+# Depends on llvm::raw_ostream
+target_link_libraries(gtest LLVMSupport)
+
 add_llvm_library(gtest_main
   UnitTestMain/TestMain.cpp
   )
+
+# Depends on llvm::cl
+target_link_libraries(gtest_main gtest LLVMSupport)
