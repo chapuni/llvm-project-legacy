@@ -10,10 +10,9 @@ add_llvm_library(LLVMInterpreter
   Execution.cpp
   ExternalFunctions.cpp
   Interpreter.cpp
+  DEPENDS intrinsics_gen
   )
 
 if( LLVM_ENABLE_FFI )
   target_link_libraries( LLVMInterpreter ${FFI_LIBRARY_PATH} )
 endif()
-
-add_dependencies(LLVMInterpreter intrinsics_gen)

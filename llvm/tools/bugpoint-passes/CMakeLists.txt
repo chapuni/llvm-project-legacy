@@ -4,6 +4,7 @@ endif()
 
 add_llvm_loadable_module( BugpointPasses
   TestPasses.cpp
+  DEPENDS intrinsics_gen
   )
 
 add_dependencies(BugpointPasses bugpoint)

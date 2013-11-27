@@ -37,4 +37,5 @@ set(LLVM_OPTIONAL_SOURCES
 
 add_llvm_unittest(IRTests
   ${IRSources}
+  DEPENDS intrinsics_gen
   )

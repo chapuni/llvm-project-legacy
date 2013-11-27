@@ -35,6 +35,5 @@ add_llvm_library(LLVMScalarOpts
   Sink.cpp
   StructurizeCFG.cpp
   TailRecursionElimination.cpp
+  DEPENDS intrinsics_gen
   )
-
-add_dependencies(LLVMScalarOpts intrinsics_gen)

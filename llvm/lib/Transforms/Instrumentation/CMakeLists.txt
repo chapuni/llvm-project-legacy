@@ -7,6 +7,5 @@ add_llvm_library(LLVMInstrumentation
   MemorySanitizer.cpp
   Instrumentation.cpp
   ThreadSanitizer.cpp
+  DEPENDS intrinsics_gen
   )
-
-add_dependencies(LLVMInstrumentation intrinsics_gen)

@@ -38,6 +38,7 @@ add_llvm_library(LLVMCore
   ValueSymbolTable.cpp
   ValueTypes.cpp
   Verifier.cpp
+  DEPENDS intrinsics_gen
   )
 
 # Workaround: It takes over 20 minutes to compile with msvc10.
@@ -48,5 +49,3 @@ set_property(
   PROPERTY COMPILE_FLAGS "/Og-"
   )
 endif()
-
-add_dependencies(LLVMCore intrinsics_gen)

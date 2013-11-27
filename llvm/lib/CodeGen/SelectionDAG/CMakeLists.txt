@@ -22,6 +22,5 @@ add_llvm_library(LLVMSelectionDAG
   ScheduleDAGVLIW.cpp
   TargetLowering.cpp
   TargetSelectionDAGInfo.cpp
+  DEPENDS intrinsics_gen
   )
-
-add_dependencies(LLVMSelectionDAG intrinsics_gen)

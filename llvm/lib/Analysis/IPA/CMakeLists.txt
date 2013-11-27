@@ -6,6 +6,5 @@ add_llvm_library(LLVMipa
   GlobalsModRef.cpp
   IPA.cpp
   InlineCost.cpp
+  DEPENDS intrinsics_gen
   )
-
-add_dependencies(LLVMipa intrinsics_gen)

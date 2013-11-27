@@ -50,8 +50,7 @@ add_llvm_library(LLVMAnalysis
   Trace.cpp
   TypeBasedAliasAnalysis.cpp
   ValueTracking.cpp
+  DEPENDS intrinsics_gen
   )
-
-add_dependencies(LLVMAnalysis intrinsics_gen)
 
 add_subdirectory(IPA)

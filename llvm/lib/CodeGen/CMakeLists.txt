@@ -109,9 +109,8 @@ add_llvm_library(LLVMCodeGen
   TwoAddressInstructionPass.cpp
   UnreachableBlockElim.cpp
   VirtRegMap.cpp
+  DEPENDS intrinsics_gen
   )
-
-add_dependencies(LLVMCodeGen intrinsics_gen)
 
 add_subdirectory(SelectionDAG)
 add_subdirectory(AsmPrinter)

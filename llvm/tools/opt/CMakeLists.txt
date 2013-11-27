@@ -5,5 +5,6 @@ add_llvm_tool(opt
   GraphPrinters.cpp
   PrintSCC.cpp
   opt.cpp
+  DEPENDS intrinsics_gen
   )
 set_target_properties(opt PROPERTIES ENABLE_EXPORTS 1)

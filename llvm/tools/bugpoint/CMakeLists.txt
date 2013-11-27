@@ -11,5 +11,7 @@ add_llvm_tool(bugpoint
   OptimizerDriver.cpp
   ToolRunner.cpp
   bugpoint.cpp
+  DEPENDS intrinsics_gen
   )
+
 set_target_properties(bugpoint PROPERTIES ENABLE_EXPORTS 1)

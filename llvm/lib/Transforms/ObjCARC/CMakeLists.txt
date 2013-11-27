@@ -8,6 +8,5 @@ add_llvm_library(LLVMObjCARCOpts
   ObjCARCContract.cpp
   DependencyAnalysis.cpp
   ProvenanceAnalysis.cpp
+  DEPENDS intrinsics_gen
   )
-
-add_dependencies(LLVMObjCARCOpts intrinsics_gen)

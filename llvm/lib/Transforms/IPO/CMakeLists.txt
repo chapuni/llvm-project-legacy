@@ -20,6 +20,5 @@ add_llvm_library(LLVMipo
   PruneEH.cpp
   StripDeadPrototypes.cpp
   StripSymbols.cpp
+  DEPENDS intrinsics_gen
   )
-
-add_dependencies(LLVMipo intrinsics_gen)

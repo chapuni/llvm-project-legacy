@@ -2,6 +2,5 @@ add_llvm_library(LLVMBitReader
   BitReader.cpp
   BitcodeReader.cpp
   BitstreamReader.cpp
+  DEPENDS intrinsics_gen
   )
-
-add_dependencies(LLVMBitReader intrinsics_gen)
