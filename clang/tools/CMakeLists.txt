@@ -1,3 +1,11 @@
+if(CLANG_ENABLE_ARCMT)
+  add_subdirectory(c-index-test)
+  add_subdirectory(c-arcmt-test)
+endif()
+
+# They, below, requires tablegen'd headers.
+list(APPEND LLVM_COMMON_DEPENDS ${CLANG_TBLGEN_DEPS})
+
 add_subdirectory(diagtool)
 add_subdirectory(driver)
 if(CLANG_ENABLE_REWRITER)
@@ -6,9 +14,7 @@ endif()
 
 if(CLANG_ENABLE_ARCMT)
   add_subdirectory(libclang)
-  add_subdirectory(c-index-test)
   add_subdirectory(arcmt-test)
-  add_subdirectory(c-arcmt-test)
 endif()
 if(CLANG_ENABLE_STATIC_ANALYZER)
   add_subdirectory(clang-check)

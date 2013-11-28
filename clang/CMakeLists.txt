@@ -363,6 +363,52 @@ mark_as_advanced(CLANG_EXECUTABLE_VERSION LIBCLANG_LIBRARY_VERSION)
 add_subdirectory(utils/TableGen)
 
 add_subdirectory(include)
+
+# CLANG_TBLGEN_DEPS is appended to LLVM_COMON_DEPENDS in each subdirectory.
+# for example; list(APPEND LLVM_COMMON_DEPENDS ${CLANG_TBLGEN_DEPS})
+
+set(CLANG_TBLGEN_DEPS
+  ClangARMNeon
+  ClangAttrClasses
+  ClangAttrDump
+  ClangAttrIdentifierArg
+  ClangAttrImpl
+  ClangAttrLateParsed
+  ClangAttrList
+  ClangAttrParsedAttrImpl
+  ClangAttrParsedAttrKinds
+  ClangAttrParsedAttrList
+  ClangAttrPCHRead
+  ClangAttrPCHWrite
+  ClangAttrSpellingListIndex
+  ClangAttrSpellings
+  ClangAttrTemplateInstantiate
+  ClangAttrTypeArg
+  ClangCC1AsOptions
+  ClangCommentCommandInfo
+  ClangCommentCommandList
+  ClangCommentHTMLNamedCharacterReferences
+  ClangCommentHTMLTags
+  ClangCommentHTMLTagsProperties
+  ClangCommentNodes
+  ClangDeclNodes
+  ClangDiagnosticAnalysis
+  ClangDiagnosticAST
+  ClangDiagnosticComment
+  ClangDiagnosticCommon
+  ClangDiagnosticDriver
+  ClangDiagnosticFrontend
+  ClangDiagnosticGroups
+  ClangDiagnosticIndexName
+  ClangDiagnosticLex
+  ClangDiagnosticParse
+  ClangDiagnosticSema
+  ClangDiagnosticSerialization
+  ClangDriverOptions
+  ClangSACheckers
+  ClangStmtNodes
+  )
+
 add_subdirectory(lib)
 add_subdirectory(tools)
 add_subdirectory(runtime)

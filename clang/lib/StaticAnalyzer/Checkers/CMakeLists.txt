@@ -73,17 +73,6 @@ add_clang_library(clangStaticAnalyzerCheckers
   VirtualCallChecker.cpp
   )
 
-add_dependencies(clangStaticAnalyzerCheckers
-  clangStaticAnalyzerCore
-  ClangAttrClasses
-  ClangAttrList
-  ClangCommentNodes
-  ClangDeclNodes
-  ClangDiagnosticCommon
-  ClangStmtNodes
-  ClangSACheckers
-  )
-
 target_link_libraries(clangStaticAnalyzerCheckers
   clangBasic
   clangAST

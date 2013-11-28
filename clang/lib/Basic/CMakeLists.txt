@@ -50,23 +50,6 @@ message(STATUS "Expecting header to go in ${CMAKE_CURRENT_BINARY_DIR}/SVNVersion
 
 endif()
 
-add_dependencies(clangBasic
-  ClangARMNeon
-  ClangAttrList
-  ClangDiagnosticAnalysis
-  ClangDiagnosticAST
-  ClangDiagnosticComment
-  ClangDiagnosticCommon
-  ClangDiagnosticDriver
-  ClangDiagnosticFrontend
-  ClangDiagnosticGroups
-  ClangDiagnosticIndexName
-  ClangDiagnosticLex
-  ClangDiagnosticParse
-  ClangDiagnosticSema
-  ClangDiagnosticSerialization
-  )
-
 # clangBasic depends on the version.
 if (Subversion_FOUND AND EXISTS "${CLANG_SOURCE_DIR}/.svn")
   add_dependencies(clangBasic clang_revision_tag)

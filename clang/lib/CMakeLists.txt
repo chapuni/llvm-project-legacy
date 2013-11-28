@@ -1,4 +1,7 @@
 add_subdirectory(Headers)
+
+list(APPEND LLVM_COMMON_DEPENDS ${CLANG_TBLGEN_DEPS})
+
 add_subdirectory(Basic)
 add_subdirectory(Lex)
 add_subdirectory(Parse)

@@ -16,21 +16,6 @@ add_clang_library(clangSerialization
   ModuleManager.cpp
   )
 
-add_dependencies(clangSerialization
-  ClangAttrClasses
-  ClangAttrList
-  ClangAttrParsedAttrList
-  ClangAttrPCHRead
-  ClangAttrPCHWrite
-  ClangCommentNodes
-  ClangDeclNodes
-  ClangDiagnosticCommon
-  ClangDiagnosticLex
-  ClangDiagnosticSema
-  ClangDiagnosticSerialization
-  ClangStmtNodes
-  )
-
 target_link_libraries(clangSerialization
   clangSema
   )

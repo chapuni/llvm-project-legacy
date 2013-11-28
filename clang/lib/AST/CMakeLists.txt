@@ -59,26 +59,6 @@ add_clang_library(clangAST
   VTTBuilder.cpp
   )
 
-add_dependencies(clangAST
-  ClangARMNeon
-  ClangAttrClasses
-  ClangAttrList
-  ClangAttrImpl
-  ClangAttrDump
-  ClangCommentCommandInfo
-  ClangCommentCommandList
-  ClangCommentNodes
-  ClangCommentHTMLTags
-  ClangCommentHTMLTagsProperties
-  ClangCommentHTMLNamedCharacterReferences
-  ClangDeclNodes
-  ClangDiagnosticAST
-  ClangDiagnosticComment
-  ClangDiagnosticCommon
-  ClangDiagnosticSema
-  ClangStmtNodes
-  )
-
 target_link_libraries(clangAST
   clangBasic
   clangLex

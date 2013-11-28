@@ -15,20 +15,6 @@ add_clang_library(clangParse
   Parser.cpp
   )
 
-add_dependencies(clangParse
-  ClangAttrClasses
-  ClangAttrIdentifierArg
-  ClangAttrLateParsed
-  ClangAttrList
-  ClangAttrParsedAttrList
-  ClangAttrTypeArg
-  ClangCommentNodes
-  ClangDeclNodes
-  ClangDiagnosticCommon
-  ClangDiagnosticParse
-  ClangStmtNodes
-  )
-
 target_link_libraries(clangParse
   clangBasic
   clangAST

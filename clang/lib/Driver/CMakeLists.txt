@@ -15,14 +15,6 @@ add_clang_library(clangDriver
   Types.cpp
   )
 
-add_dependencies(clangDriver
-  ClangAttrList
-  ClangCC1AsOptions
-  ClangDiagnosticCommon
-  ClangDiagnosticDriver
-  ClangDriverOptions
-  )
-
 target_link_libraries(clangDriver
   clangBasic
   LLVMOption

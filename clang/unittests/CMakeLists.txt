@@ -9,6 +9,8 @@ function(add_clang_unittest test_dirname)
   add_unittest(ClangUnitTests ${test_dirname} ${ARGN})
 endfunction()
 
+list(APPEND LLVM_COMMON_DEPENDS ${CLANG_TBLGEN_DEPS})
+
 add_subdirectory(Basic)
 add_subdirectory(Lex)
 if(CLANG_ENABLE_STATIC_ANALYZER)
