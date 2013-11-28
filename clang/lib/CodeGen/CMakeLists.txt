@@ -52,6 +52,8 @@ add_clang_library(clangCodeGen
   MicrosoftVBTables.cpp
   ModuleBuilder.cpp
   TargetInfo.cpp
+  DEPENDS
+    intrinsics_gen
   )
 
 target_link_libraries(clangCodeGen
