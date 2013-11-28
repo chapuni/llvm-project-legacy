@@ -4,7 +4,11 @@ endif()
 
 add_llvm_loadable_module( BugpointPasses
   TestPasses.cpp
-  DEPENDS intrinsics_gen
-  )
+  DEPENDS
+    intrinsics_gen
 
-add_dependencies(BugpointPasses bugpoint)
+    # Ninja generator cannot add targets to link-only target.
+    # add_dependencies(BugpointPasses bugpoint)
+    # Add here instead.
+    bugpoint
+  )
