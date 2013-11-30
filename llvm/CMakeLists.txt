@@ -243,7 +243,13 @@ endif()
 # components which may not strictly be necessary (tools, examples, and tests).
 #
 # This is primarily to support building smaller or faster project files.
-option(LLVM_INCLUDE_TOOLS "Generate build targets for the LLVM tools." ON)
+set(LLVM_INCLUDE_TOOLS "ON" CACHE STRING "Generate build targets for the LLVM tools.")
+if( NOT LLVM_INCLUDE_TOOLS STREQUAL "ON" AND
+    NOT LLVM_INCLUDE_TOOLS STREQUAL "OFF" AND
+    NOT LLVM_INCLUDE_TOOLS STREQUAL "bootstrap-only" )
+  message(FATAL_ERROR
+"LLVM_INCLUDE_TOOLS can only be set to 'ON', 'OFF' or 'bootstrap-only'!")
+endif()
 option(LLVM_BUILD_TOOLS
   "Build the LLVM tools. If OFF, just generate build targets." ON)
 
@@ -462,7 +468,7 @@ add_subdirectory(utils/yaml-bench)
 
 add_subdirectory(projects)
 
-if( LLVM_INCLUDE_TOOLS )
+if( NOT LLVM_INCLUDE_TOOLS STREQUAL "OFF" )
   add_subdirectory(tools)
 endif()
 

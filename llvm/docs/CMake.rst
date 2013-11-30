@@ -177,9 +177,11 @@ LLVM-specific variables
   example, you can build *llvm-as* with a makefile-based system executing *make
   llvm-as* on the root of your build directory.
 
-**LLVM_INCLUDE_TOOLS**:BOOL
-  Generate build targets for the LLVM tools. Defaults to ON. You can use that
-  option for disabling the generation of build targets for the LLVM tools.
+**LLVM_INCLUDE_TOOLS**:STRING
+  Generate build targets for the LLVM tools. Defaults to *ON*. If set to
+  *OFF*, the generation of the build targets for the LLVM tools is disabled. If
+  set to *bootstrap-only*, the generation of the build targets for ``lld``,
+  ``lldb`` and ``polly`` is disabled.
 
 **LLVM_BUILD_EXAMPLES**:BOOL
   Build LLVM examples. Defaults to OFF. Targets for building each example are
