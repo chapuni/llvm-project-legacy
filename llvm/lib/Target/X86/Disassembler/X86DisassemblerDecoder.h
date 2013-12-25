@@ -26,7 +26,7 @@ extern "C" {
 #define INSTRUCTION_IDS     \
   uint16_t instructionIDs;
 
-#include "X86DisassemblerDecoderCommon.h"
+#include "llvm/TableGen/X86DisassemblerDecoderCommon.h"
 
 #undef INSTRUCTION_SPECIFIER_FIELDS
 #undef INSTRUCTION_IDS

@@ -27,7 +27,7 @@
 #define INSTRUCTION_IDS           \
   InstrUID   instructionIDs[256];
 
-#include "../../lib/Target/X86/Disassembler/X86DisassemblerDecoderCommon.h"
+#include "llvm/TableGen/X86DisassemblerDecoderCommon.h"
 
 #undef INSTRUCTION_SPECIFIER_FIELDS
 #undef INSTRUCTION_IDS
