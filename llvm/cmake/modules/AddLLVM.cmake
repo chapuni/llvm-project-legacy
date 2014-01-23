@@ -176,6 +176,7 @@ macro(add_llvm_library name)
         LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
         ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX})
     endif()
+    set_property(GLOBAL APPEND PROPERTY LLVM_EXPORTS ${name})
   endif()
   set_target_properties(${name} PROPERTIES FOLDER "Libraries")
 
@@ -233,6 +234,7 @@ ${name} ignored.")
           LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
           ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX})
       endif()
+      set_property(GLOBAL APPEND PROPERTY LLVM_EXPORTS ${name})
     endif()
   endif()
 
@@ -281,6 +283,9 @@ macro(add_llvm_tool name)
               EXPORT LLVMExports
               RUNTIME DESTINATION bin)
     endif()
+  endif()
+  if( LLVM_BUILD_TOOLS )
+    set_property(GLOBAL APPEND PROPERTY LLVM_EXPORTS ${name})
   endif()
   set_target_properties(${name} PROPERTIES FOLDER "Tools")
 endmacro(add_llvm_tool name)
