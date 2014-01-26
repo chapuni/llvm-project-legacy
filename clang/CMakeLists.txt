@@ -36,35 +36,33 @@ if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR )
 
   list(GET CONFIG_OUTPUT 0 ENABLE_ASSERTIONS)
   list(GET CONFIG_OUTPUT 1 TOOLS_BINARY_DIR)
-  list(GET CONFIG_OUTPUT 2 LIBRARY_DIR)
-  list(GET CONFIG_OUTPUT 3 INCLUDE_DIR)
+  #list(GET CONFIG_OUTPUT 2 LIBRARY_DIR)
+  #list(GET CONFIG_OUTPUT 3 INCLUDE_DIR) # main_include
   list(GET CONFIG_OUTPUT 4 LLVM_OBJ_ROOT)
   list(GET CONFIG_OUTPUT 5 MAIN_SRC_DIR)
 
+  find_package(LLVM REQUIRED HINTS ${LLVM_OBJ_ROOT})
+
   if(NOT MSVC_IDE)
+    # FIXME: Should be inherited.
     set(LLVM_ENABLE_ASSERTIONS ${ENABLE_ASSERTIONS}
       CACHE BOOL "Enable assertions")
     # Assertions should follow llvm-config's.
     mark_as_advanced(LLVM_ENABLE_ASSERTIONS)
   endif()
 
+  # FIXME: It may be defined in LLVMConfig. LLVM_INSTALL_PREFIX
   set(LLVM_TOOLS_BINARY_DIR ${TOOLS_BINARY_DIR} CACHE PATH "Path to llvm/bin")
-  set(LLVM_LIBRARY_DIR ${LIBRARY_DIR} CACHE PATH "Path to llvm/lib")
-  set(LLVM_MAIN_INCLUDE_DIR ${INCLUDE_DIR} CACHE PATH "Path to llvm/include")
-  set(LLVM_BINARY_DIR ${LLVM_OBJ_ROOT} CACHE PATH "Path to LLVM build tree")
+  # FIXME: It could be integrated to LLVM_LIBRARY_DIRS.
+  set(LLVM_LIBRARY_DIR ${LLVM_LIBRARY_DIRS})
   set(LLVM_MAIN_SRC_DIR ${MAIN_SRC_DIR} CACHE PATH "Path to LLVM source tree")
 
+  # FIXME: It may be defined in LLVMConfig.
   find_program(LLVM_TABLEGEN_EXE "llvm-tblgen" ${LLVM_TOOLS_BINARY_DIR}
     NO_DEFAULT_PATH)
 
-  set(LLVM_CMAKE_PATH "${LLVM_BINARY_DIR}/share/llvm/cmake")
-  set(LLVMCONFIG_FILE "${LLVM_CMAKE_PATH}/LLVMConfig.cmake")
-  if(EXISTS ${LLVMCONFIG_FILE})
-    list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_PATH}")
-    include(${LLVMCONFIG_FILE})
-  else()
-    message(FATAL_ERROR "Not found: ${LLVMCONFIG_FILE}")
-  endif()
+  # FIXME: Should it be done in LLVMConfig.cmake?
+  list(APPEND CMAKE_MODULE_PATH "${LLVM_CMAKE_DIR}")
 
   # They are used as destination of target generators.
   set(LLVM_RUNTIME_OUTPUT_INTDIR ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/bin)
@@ -76,6 +74,7 @@ if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR )
   option(LLVM_FORCE_USE_OLD_HOST_TOOLCHAIN
     "Set to ON to force using an old, unsupported host toolchain." OFF)
 
+  # FIXME: They can be included automatically?
   include(AddLLVM)
   include(TableGen)
   include(HandleLLVMOptions)
@@ -86,12 +85,8 @@ if( CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR )
     set(LLVM_INCLUDE_TESTS ON)
   endif()
 
-  include_directories("${LLVM_BINARY_DIR}/include" "${LLVM_MAIN_INCLUDE_DIR}")
-  link_directories("${LLVM_LIBRARY_DIR}")
-
-  set( CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin )
-  set( CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib )
-  set( CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib )
+  # FIXME: Define in LLVMConfig.cmake.
+  include_directories("${LLVM_INCLUDE_DIRS}")
 
   if(LLVM_INCLUDE_TESTS)
     # Check prebuilt llvm/utils.
