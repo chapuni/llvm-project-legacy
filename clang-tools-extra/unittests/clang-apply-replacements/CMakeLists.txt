@@ -7,7 +7,7 @@ include_directories(
   ${CommonIncLocation}
   )
 
-add_extra_unittest(ClangApplyReplacementsTests
+add_extra_unittest(ClangApplyReplacementsTests #TDDEPS:exclude
   ReformattingTest.cpp
   )
 

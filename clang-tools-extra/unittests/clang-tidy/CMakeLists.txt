@@ -6,7 +6,7 @@ get_filename_component(CLANG_LINT_SOURCE_DIR
   ${CMAKE_CURRENT_SOURCE_DIR}/../../clang-tidy REALPATH)
 include_directories(${CLANG_LINT_SOURCE_DIR})
 
-add_extra_unittest(ClangTidyTests
+add_extra_unittest(ClangTidyTests #TDDEPS:exclude
   LLVMModuleTest.cpp
   GoogleModuleTest.cpp)
 

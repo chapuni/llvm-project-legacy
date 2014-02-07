@@ -14,7 +14,7 @@ include_directories(
   ${CommonIncLocation}
   )
 
-add_extra_unittest(ClangModernizeTests
+add_extra_unittest(ClangModernizeTests #TDDEPS:exclude
   IncludeExcludeTest.cpp
   PerfSupportTest.cpp
   TransformTest.cpp

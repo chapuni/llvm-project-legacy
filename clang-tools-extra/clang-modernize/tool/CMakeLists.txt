@@ -25,7 +25,7 @@ list(APPEND ClangModernizeSources ${PassByValueSources})
 file(GLOB_RECURSE ReplaceAutoPtrSources "../ReplaceAutoPtr/*.cpp")
 list(APPEND ClangModernizeSources ${ReplaceAutoPtrSources})
 
-add_clang_executable(clang-modernize
+add_clang_executable(clang-modernize #TDDEPS:exclude
   ${ClangModernizeSources}
   )
 
