@@ -355,6 +355,10 @@ include(${LLVMBUILDCMAKEFRAG})
 
 ######
 
+add_subdirectory(utils/tddeps)
+
+######
+
 # Configure all of the various header file fragments LLVM uses which depend on
 # configuration variables.
 set(LLVM_ENUM_TARGETS "")
