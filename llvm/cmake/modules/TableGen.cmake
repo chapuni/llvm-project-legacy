@@ -14,8 +14,9 @@ function(tablegen project ofn)
     endif()
   endforeach()
 
-  file(GLOB local_tds "*.td")
-  file(GLOB_RECURSE global_tds "${LLVM_MAIN_INCLUDE_DIR}/llvm/*.td")
+  get_filename_component(tdname ${LLVM_TARGET_DEFINITIONS} NAME)
+  string(REPLACE "." "_" tdname ${tdname})
+  string(REPLACE "-" "_" tdname ${tdname})
 
   if (IS_ABSOLUTE ${LLVM_TARGET_DEFINITIONS})
     set(LLVM_TARGET_DEFINITIONS_ABSOLUTE ${LLVM_TARGET_DEFINITIONS})
@@ -32,8 +33,9 @@ function(tablegen project ofn)
     # The file in LLVM_TARGET_DEFINITIONS may be not in the current
     # directory and local_tds may not contain it, so we must
     # explicitly list it here:
-    DEPENDS ${${project}_TABLEGEN_EXE} ${local_tds} ${global_tds}
-    ${LLVM_TARGET_DEFINITIONS_ABSOLUTE}
+    MAIN_DEPENDENCY ${LLVM_TARGET_DEFINITIONS_ABSOLUTE}
+    DEPENDS ${${project}_TABLEGEN_EXE}
+    ${TDDEPS_${tdname}}
     COMMENT "Building ${ofn}..."
     )
   add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${ofn}
@@ -53,6 +55,7 @@ function(tablegen project ofn)
 
   set(TABLEGEN_OUTPUT ${TABLEGEN_OUTPUT} ${CMAKE_CURRENT_BINARY_DIR}/${ofn} PARENT_SCOPE)
   set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/${ofn} PROPERTIES
+    LLVM_TABLEGEN_PROJECT ${project}
     GENERATED 1)
 endfunction()
 
@@ -61,13 +64,31 @@ function(add_public_tablegen_target target)
   if(NOT TABLEGEN_OUTPUT)
     message(FATAL_ERROR "Requires tablegen() definitions as TABLEGEN_OUTPUT.")
   endif()
+  foreach(ofn ${TABLEGEN_OUTPUT})
+    get_property(project SOURCE ${ofn} PROPERTY LLVM_TABLEGEN_PROJECT)
+    get_filename_component(ofn ${ofn} NAME)
+    get_property(tddeps_managed_files GLOBAL PROPERTY TDDEPS_MANAGED_FILES)
+    list(FIND tddeps_managed_files "${ofn}" idx)
+    if(idx GREATER -1)
+      string(REGEX REPLACE "[-.]" "_" tdname ${ofn})
+      set_property(GLOBAL PROPERTY TDDEPS_TARGET_${tdname} "${project};${target}")
+    else()
+      message(STATUS "* ${ofn} is not used by managed files.")
+    endif()
+  endforeach()
   add_custom_target(${target}
     DEPENDS ${TABLEGEN_OUTPUT})
+  # Remove managed files in LLVM_COMMON_DEPENDS at first.
+  get_property(tddeps_managed_files GLOBAL PROPERTY TDDEPS_MANAGED_FILES)
+  if(LLVM_COMMON_DEPENDS AND tddeps_managed_files)
+    list(REMOVE_ITEM LLVM_COMMON_DEPENDS ${tddeps_managed_files})
+  endif()
   if(LLVM_COMMON_DEPENDS)
     add_dependencies(${target} ${LLVM_COMMON_DEPENDS})
   endif()
   set_target_properties(${target} PROPERTIES FOLDER "Tablegenning")
   set(LLVM_COMMON_DEPENDS ${LLVM_COMMON_DEPENDS} ${target} PARENT_SCOPE)
+  set_property(GLOBAL APPEND PROPERTY TDDEPS_MANAGED_FILES ${target})
 endfunction()
 
 if(CMAKE_CROSSCOMPILING)

@@ -166,6 +166,110 @@ function(set_output_directory target bindir libdir)
   endif()
 endfunction()
 
+function(add_obj_library name)
+  add_library(${name} OBJECT EXCLUDE_FROM_ALL ${ARGN})
+  llvm_update_compile_flags(${name})
+  add_dependencies(${name} tddeps)
+  if(LLVM_COMMON_DEPENDS)
+    message("${name}: ${LLVM_COMMON_DEPENDS}")
+    add_dependencies(${name} ${LLVM_COMMON_DEPENDS})
+  endif()
+  set_target_properties(${name} PROPERTIES FOLDER "Object Libraries")
+endfunction()
+
+function(add_obj_libraries name TARGET_OBJS OBJS)
+  string(REPLACE "-" "_" tdname ${name})
+  set(tddepset "${TDDEPSET_${tdname}}")
+  if("${tddepset}" STREQUAL "")
+    message(STATUS "tddeps: ${name} is not managed.")
+    # Don't touch neither TARGET_OBJS nor OBJS.
+    return()
+  endif()
+
+  set(ALL_FILES ${ARGN})
+  set(objs)
+
+  # Remove managed files in LLVM_COMMON_DEPENDS at first.
+  get_property(tddeps_managed_files GLOBAL PROPERTY TDDEPS_MANAGED_FILES)
+  if(LLVM_COMMON_DEPENDS AND tddeps_managed_files)
+    list(REMOVE_ITEM LLVM_COMMON_DEPENDS ${tddeps_managed_files})
+    set(LLVM_COMMON_DEPENDS ${LLVM_COMMON_DEPENDS} PARENT_SCOPE)
+  endif()
+
+  foreach(depset ${tddepset})
+    set(files "${TDDEPS_${tdname}_${depset}}")
+    if(NOT files)
+      message(FATAL_ERROR "TDDEPS_${tdname}_${depset} doesn't exist.")
+    endif()
+    set(hdrs  "${TDDEPS_${depset}}")
+    if(LLVM_OPTIONAL_SOURCES)
+      foreach(f ${LLVM_OPTIONAL_SOURCES})
+        list(FIND ALL_FILES ${f} idx)
+        if(idx EQUAL -1)
+          list(REMOVE_ITEM files ${f})
+        endif()
+      endforeach()
+    endif()
+
+    # for check
+    list(REMOVE_ITEM ALL_FILES ${files})
+
+    # Collate individual deps (in depset) to per-project deps.
+    set(projects)
+    set(deps)
+    foreach(hdr ${hdrs})
+      # hdr XXXX.inc
+      string(REGEX REPLACE "[-.]" "_" hdr ${hdr})
+      get_property(tdtarget GLOBAL PROPERTY TDDEPS_TARGET_${hdr})
+      if(tdtarget)
+        list(GET tdtarget 0 project)  # LLVM;Clang
+        list(GET tdtarget 1 tdtarget) # intrinsics_gen;ClangSACheckers
+        list(APPEND projects ${project})
+        list(APPEND deps ${tdtarget})
+      else()
+        message(STATUS "* Rules for ${hdr} are unknown. Assuming independent.")
+      endif()
+    endforeach()
+
+    # "Clang;LLVM"=>"Clang.LLVM"
+    if(projects)
+      list(REMOVE_DUPLICATES projects)
+      list(SORT projects)
+      string(REGEX REPLACE ";" "." stem ${projects})
+    else()
+      set(stem "None")
+    endif()
+
+    list(APPEND objstems ${stem})
+    list(APPEND files_${stem} ${files})
+    list(APPEND deps_${stem} ${deps})
+  endforeach()
+
+  list(REMOVE_DUPLICATES objstems)
+  foreach(stem ${objstems})
+    if("${stem}" STREQUAL "None")
+      set(objname obj.${name})
+      add_obj_library(${objname} ${files_${stem}})
+    else()
+      set(objname obj.${name}.${stem})
+      add_obj_library(${objname} ${files_${stem}})
+      add_dependencies(${objname} ${deps_${stem}})
+    endif()
+    list(APPEND objs "${objname}")
+  endforeach()
+
+  # FIXME: Check consistency.
+  if(ALL_FILES)
+    message(SEND_ERROR "ALL_FILES(${name})<${ALL_FILES}>")
+  endif()
+
+  set(${OBJS} ${objs} PARENT_SCOPE)
+  foreach(obj ${objs})
+    list(APPEND target_objs "$<TARGET_OBJECTS:${obj}>")
+  endforeach()
+  set(${TARGET_OBJS} ${target_objs} PARENT_SCOPE)
+endfunction()
+
 # llvm_add_library(name sources...
 #   SHARED;STATIC
 #     STATIC by default w/o BUILD_SHARED_LIBS.
@@ -219,19 +323,9 @@ function(llvm_add_library name)
   endif()
 
   # Generate objlib
-  if(ARG_SHARED AND ARG_STATIC)
+  if(NOT ARG_OBJLIBS)
     # Generate an obj library for both targets.
-    set(obj_name "obj.${name}")
-    add_library(${obj_name} OBJECT EXCLUDE_FROM_ALL
-      ${ALL_FILES}
-      )
-    llvm_update_compile_flags(${obj_name})
-    set(ALL_FILES "$<TARGET_OBJECTS:${obj_name}>")
-
-    # Do add_dependencies(obj) later due to CMake issue 14747.
-    list(APPEND objlibs ${obj_name})
-
-    set_target_properties(${obj_name} PROPERTIES FOLDER "Object Libraries")
+    add_obj_libraries(${name} ALL_FILES objlibs ${ALL_FILES})
   endif()
 
   if(ARG_SHARED AND ARG_STATIC)
@@ -358,6 +452,9 @@ endmacro(add_llvm_loadable_module name)
 
 macro(add_llvm_executable name)
   llvm_process_sources( ALL_FILES ${ARGN} )
+  if(TRUE)
+    add_obj_libraries(${name} ALL_FILES objs ${ALL_FILES})
+  endif()
   if( EXCLUDE_FROM_ALL )
     add_executable(${name} EXCLUDE_FROM_ALL ${ALL_FILES})
   else()
@@ -427,7 +524,7 @@ macro(add_llvm_target target_name)
   include_directories(BEFORE
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR})
-  add_llvm_library(LLVM${target_name} ${ARGN} ${TABLEGEN_OUTPUT})
+  add_llvm_library(LLVM${target_name} ${ARGN})
   set( CURRENT_LLVM_TARGET LLVM${target_name} )
 endmacro(add_llvm_target)
 
