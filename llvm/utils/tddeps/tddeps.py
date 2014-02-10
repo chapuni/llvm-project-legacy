@@ -476,6 +476,7 @@ if opts.verbose:
     sys.stderr.write("====groups\n")
 out.write("\n######## Groups\n")
 allset = set()
+all_tds = set()
 for dir,files in sorted(cmake_targets.items()):
     if dir not in cmake_target_names:
         continue
@@ -508,7 +509,9 @@ for dir,files in sorted(cmake_targets.items()):
         else:
             out.write("set(TDDEPS_%s\n" % group_name)
             for f in sorted(k):
-                out.write("  td.%s\n" % os.path.basename(f))
+                tdn = "td.%s" % os.path.basename(f)
+                out.write("  %s\n" % tdn)
+                all_tds.add(tdn)
             out.write("  %s)\n" % parent_scope)
             allset.add(k)
 
@@ -516,6 +519,11 @@ for dir,files in sorted(cmake_targets.items()):
         for i in sorted(v):
             out.write("  %s\n" % os.path.relpath(i, dir))
         out.write("  %s)\n" % parent_scope)
+
+out.write("\nset(TDDEPS_MANAGED_FILES\n")
+for k in sorted(all_tds):
+    out.write("  %s\n" % k)
+out.write("  PARENT_SCOPE)\n")
 
 if opts.verbose:
     sys.stderr.write("====stamps\n")
