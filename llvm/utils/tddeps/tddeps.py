@@ -509,7 +509,7 @@ for dir,files in sorted(cmake_targets.items()):
         else:
             out.write("set(TDDEPS_%s\n" % group_name)
             for f in sorted(k):
-                tdn = "td.%s" % os.path.basename(f)
+                tdn = "%s" % os.path.basename(f)
                 out.write("  %s\n" % tdn)
                 all_tds.add(tdn)
             out.write("  %s)\n" % parent_scope)
@@ -520,10 +520,10 @@ for dir,files in sorted(cmake_targets.items()):
             out.write("  %s\n" % os.path.relpath(i, dir))
         out.write("  %s)\n" % parent_scope)
 
-out.write("\nset(TDDEPS_MANAGED_FILES\n")
+out.write("\nset_property(GLOBAL PROPERTY TDDEPS_MANAGED_FILES\n")
 for k in sorted(all_tds):
     out.write("  %s\n" % k)
-out.write("  PARENT_SCOPE)\n")
+out.write("  )\n")
 
 if opts.verbose:
     sys.stderr.write("====stamps\n")
