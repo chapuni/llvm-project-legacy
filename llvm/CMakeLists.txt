@@ -1,6 +1,6 @@
 # See docs/CMake.html for instructions about how to build LLVM with CMake.
 
-cmake_minimum_required(VERSION 2.8.8)
+cmake_minimum_required(VERSION 2.8.12)
 project(LLVM)
 
 # Add path for custom modules
