@@ -46,9 +46,13 @@ if opts.out:
 
 infile_mtime = 0
 if opts.infile:
-    outfile = opts.infile+".tmp"
-    st = os.lstat(opts.infile)
+    if os.path.exists(opts.infile):
+        outfile = opts.infile+".tmp"
+        st = os.lstat(opts.infile)
     #infile_mtime = st.st_mtime
+    else:
+        outfile = opts.infile
+        opts.infile = None
 
 if outfile:
     out = open(outfile, 'w')
