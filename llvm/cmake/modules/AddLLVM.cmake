@@ -359,7 +359,7 @@ function(llvm_add_library name)
       ${lib_deps}
       ${llvm_libs}
       )
-  elseif((CYGWIN OR WIN32) AND ARG_SHARED)
+  elseif(ARG_SHARED AND LLVM_ENABLE_STRICT_LIBDEPS)
     # Win32's import library may be unaware of its dependent libs.
     target_link_libraries(${name} PRIVATE
       ${ARG_LINK_LIBS}
@@ -466,6 +466,13 @@ macro(add_llvm_executable name)
 
   set(EXCLUDE_FROM_ALL OFF)
   set_output_directory(${name} ${LLVM_RUNTIME_OUTPUT_INTDIR} ${LLVM_LIBRARY_OUTPUT_INTDIR})
+
+  if(BUILD_SHARED_LIBS AND LLVM_ENABLE_STRICT_LIBDEPS)
+    set_property(TARGET ${name} APPEND_STRING PROPERTY
+      LINK_FLAGS " ${XXX2}${LLVM_LIBRARY_OUTPUT_INTDIR}"
+      )
+  endif()
+
   llvm_config( ${name} ${LLVM_LINK_COMPONENTS} )
   if( LLVM_COMMON_DEPENDS )
     add_dependencies( ${name} ${LLVM_COMMON_DEPENDS} )

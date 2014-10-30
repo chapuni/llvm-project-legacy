@@ -452,6 +452,20 @@ if(LLVM_ENABLE_EH AND NOT LLVM_ENABLE_RTTI)
   message(FATAL_ERROR "Exception handling requires RTTI. You must set LLVM_ENABLE_RTTI to ON")
 endif()
 
+# Strict libdeps
+if(CYGWIN OR WIN32)
+  # Win32's import library may be unaware of its dependent libs.
+  set(LLVM_ENABLE_STRICT_LIBDEPS ON)
+else()
+  # FIXME: Could it be configurable?
+  set(LLVM_ENABLE_STRICT_LIBDEPS ON)
+  set(XXX1 "-Wl,--unresolved-symbols=ignore-in-shared-libs")
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${XXX1}")
+  # Set -rpath-link in add_llvm_executable.
+  # LIBRARY_OUTPUT_DIRECTORY is not obvious here. 
+  set(XXX2 "${XXX1},-rpath-link,")
+endif()
+
 # Plugin support
 # FIXME: Make this configurable.
 if(WIN32 OR CYGWIN)
