@@ -34,6 +34,42 @@ macro(llvm_config executable)
   explicit_llvm_config(${executable} ${ARGN})
 endmacro(llvm_config)
 
+function(llvm_target_link_libraries name)
+  cmake_parse_arguments(ARG
+    ""
+    ""
+    "INTERFACE;PRIVATE;PUBLIC"
+    ${ARGN})
+  foreach(stem UNPARSED_ARGUMENTS INTERFACE PRIVATE PUBLIC)
+    set(libs)
+    foreach(lib ${ARG_${stem}})
+      if(TARGET ${lib})
+        get_property(ulib TARGET ${lib} PROPERTY LLVM_UMBRELLA_SHARED_LIB)
+        if(NOT "${ulib}" STREQUAL "")
+          message("${name}:\t${lib}\t=>${ulib}")
+          set(lib ${ulib})
+        endif()
+      endif()
+      list(APPEND libs ${lib})
+    endforeach()
+    if(libs)
+      list(REMOVE_DUPLICATES libs)
+      set("ARG_${stem}" ${libs})
+    endif()
+  endforeach()
+  if(ARG_INTERFACE OR ARG_PRIVATE OR ARG_PUBLIC)
+    target_link_libraries(${name}
+      ${ARG_UNPARSED_ARGUMENTS}
+      INTERFACE ${ARG_INTERFACE}
+      PRIVATE ${ARG_PRIVATE}
+      PUBLIC ${ARG_PUBLIC}
+      )
+  else()
+    target_link_libraries(${name}
+      ${ARG_UNPARSED_ARGUMENTS}
+      )
+  endif()
+endfunction()
 
 function(explicit_llvm_config executable)
   set( link_components ${ARGN} )
@@ -41,12 +77,12 @@ function(explicit_llvm_config executable)
   llvm_map_components_to_libnames(LIBRARIES ${link_components})
   get_target_property(t ${executable} TYPE)
   if("x${t}" STREQUAL "xSTATIC_LIBRARY")
-    target_link_libraries(${executable} ${cmake_2_8_12_INTERFACE} ${LIBRARIES})
+    llvm_target_link_libraries(${executable} ${cmake_2_8_12_INTERFACE} ${LIBRARIES})
   elseif("x${t}" STREQUAL "xSHARED_LIBRARY" OR "x${t}" STREQUAL "xMODULE_LIBRARY")
-    target_link_libraries(${executable} ${cmake_2_8_12_PRIVATE} ${LIBRARIES})
+    llvm_target_link_libraries(${executable} ${cmake_2_8_12_PRIVATE} ${LIBRARIES})
   else()
     # Use plain form for legacy user.
-    target_link_libraries(${executable} ${LIBRARIES})
+    llvm_target_link_libraries(${executable} ${LIBRARIES})
   endif()
 endfunction(explicit_llvm_config)
 

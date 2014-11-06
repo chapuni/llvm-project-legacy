@@ -354,26 +354,94 @@ function(llvm_add_library name)
 
   if(CMAKE_VERSION VERSION_LESS 2.8.12)
     # Link libs w/o keywords, assuming PUBLIC.
-    target_link_libraries(${name}
+    llvm_target_link_libraries(${name}
       ${lib_deps}
       )
   elseif(ARG_STATIC)
-    target_link_libraries(${name} INTERFACE
+    llvm_target_link_libraries(${name} INTERFACE
+      ${lib_deps}
+      )
+  elseif(ARG_SHARED AND NOT LLVM_EXPORTED_SYMBOL_FILE)
+    set(p)
+    set(q ${lib_deps})
+    while(q)
+      #message("P<${p}>\t\tQ:<${q}>")
+      list(GET q 0 lib)
+      list(REMOVE_AT q 0)
+      if("${lib}" MATCHES "^(LLVM|clang)")
+	if(TARGET ${lib})
+          get_property(ulib TARGET ${lib} PROPERTY LLVM_UMBRELLA_SHARED_LIB)
+          if(NOT "${ulib}" STREQUAL "")
+            set(lib ${ulib})
+          endif()
+	  list(APPEND p ${lib})
+          get_property(lib_type TARGET ${lib} PROPERTY TYPE)
+          if("${lib_type}" STREQUAL "STATIC_LIBRARY")
+            get_property(deps TARGET ${lib} PROPERTY INTERFACE_LINK_LIBRARIES)
+            list(REMOVE_ITEM deps "${q}")
+            if(deps)
+              #message("DEPS<${deps}>")
+              list(REMOVE_ITEM p ${deps})
+              #message("Q<${q}>")
+              list(INSERT q 0 ${deps})
+              #message("Q<${q}>")
+            endif()
+          endif()
+	else()
+          message(FATAL_ERROR "Order ${lib}=>${name}")
+	endif()
+      else()
+	list(APPEND lib_deps ${lib})
+      endif()
+    endwhile()
+    message("*******${name}:<${p}>")
+    if(lib_deps)
+      message("*******${name}:lib_deps<${lib_deps}>")
+      list(REMOVE_DUPLICATES lib_deps)
+      list(REMOVE_ITEM lib_deps ${p})
+      message("*******${name}:lib_deps<${lib_deps}>")
+    endif()
+    if(p)
+      list(REMOVE_DUPLICATES p)
+      message("*******${name}:<${p}>")
+      foreach(lib ${p})
+        if(TARGET ${lib})
+          get_property(lib_type TARGET ${lib} PROPERTY TYPE)
+          if("${lib_type}" STREQUAL "STATIC_LIBRARY")
+            get_property(ulib TARGET ${lib} PROPERTY LLVM_UMBRELLA_SHARED_LIB)
+            if(NOT "${ulib}" STREQUAL "" AND NOT "${ulib}" STREQUAL "${name}")
+              message(FATAL_ERROR "Collision ${lib}: ${ulib} and ${name}")
+            endif()
+            set_property(TARGET ${lib} PROPERTY LLVM_UMBRELLA_SHARED_LIB "${name}")
+          endif()
+        endif()
+      endforeach()
+
+      set(p
+        -Wl,--whole-archive
+        ${p}
+        -Wl,--no-whole-archive
+        )
+    endif()
+    target_link_libraries(${name} PRIVATE
+      ${p}
+      )
+    llvm_target_link_libraries(${name} PUBLIC
       ${lib_deps}
       )
   elseif((CYGWIN OR WIN32) AND ARG_SHARED)
     # Win32's import library may be unaware of its dependent libs.
-    target_link_libraries(${name} PRIVATE
+    llvm_target_link_libraries(${name} PRIVATE
       ${lib_deps}
       )
   elseif(ARG_SHARED AND BUILD_SHARED_LIBS)
     # FIXME: It may be PRIVATE since SO knows its dependent libs.
-    target_link_libraries(${name} PUBLIC
+    llvm_target_link_libraries(${name} PUBLIC
       ${lib_deps}
       )
   else()
     # MODULE|SHARED
-    target_link_libraries(${name} PRIVATE
+    llvm_target_link_libraries(${name} PRIVATE
       ${lib_deps}
       )
   endif()
@@ -600,7 +668,7 @@ function(add_unittest test_suite test_name)
   add_llvm_executable(${test_name} ${ARGN})
   set(outdir ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR})
   set_output_directory(${test_name} ${outdir} ${outdir})
-  target_link_libraries(${test_name}
+  llvm_target_link_libraries(${test_name}
     gtest
     gtest_main
     LLVMSupport # gtest needs it for raw_ostream.
