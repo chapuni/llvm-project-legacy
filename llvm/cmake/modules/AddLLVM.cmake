@@ -339,46 +339,42 @@ function(llvm_add_library name)
   # It would be nice to verify that we have the dependencies for this library
   # name, but using get_property(... SET) doesn't suffice to determine if a
   # property has been set to an empty value.
-  get_property(lib_deps GLOBAL PROPERTY LLVMBUILD_LIB_DEPS_${name})
+  get_property(llvmbuild_lib_deps GLOBAL PROPERTY LLVMBUILD_LIB_DEPS_${name})
 
   llvm_map_components_to_libnames(llvm_libs
     ${ARG_LINK_COMPONENTS}
     ${LLVM_LINK_COMPONENTS}
     )
 
+  set(lib_deps
+    ${ARG_LINK_LIBS}
+    ${llvmbuild_lib_deps}
+    ${llvm_libs}
+    )
+
   if(CMAKE_VERSION VERSION_LESS 2.8.12)
     # Link libs w/o keywords, assuming PUBLIC.
     target_link_libraries(${name}
-      ${ARG_LINK_LIBS}
       ${lib_deps}
-      ${llvm_libs}
       )
   elseif(ARG_STATIC)
     target_link_libraries(${name} INTERFACE
-      ${ARG_LINK_LIBS}
       ${lib_deps}
-      ${llvm_libs}
       )
   elseif((CYGWIN OR WIN32) AND ARG_SHARED)
     # Win32's import library may be unaware of its dependent libs.
     target_link_libraries(${name} PRIVATE
-      ${ARG_LINK_LIBS}
       ${lib_deps}
-      ${llvm_libs}
       )
   elseif(ARG_SHARED AND BUILD_SHARED_LIBS)
     # FIXME: It may be PRIVATE since SO knows its dependent libs.
     target_link_libraries(${name} PUBLIC
-      ${ARG_LINK_LIBS}
       ${lib_deps}
-      ${llvm_libs}
       )
   else()
     # MODULE|SHARED
     target_link_libraries(${name} PRIVATE
-      ${ARG_LINK_LIBS}
       ${lib_deps}
-      ${llvm_libs}
       )
   endif()
 
