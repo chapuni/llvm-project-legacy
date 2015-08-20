@@ -1,5 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.sh %s misc-static-assert %t
-// REQUIRES: shell
+// RUN: $(dirname %s)/check_clang_tidy.py %s misc-static-assert %t
 
 void abort() {}
 #ifdef NDEBUG

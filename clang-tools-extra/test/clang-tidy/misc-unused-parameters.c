@@ -1,5 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.sh %s misc-unused-parameters %t -- -xc
-// REQUIRES: shell
+// RUN: $(dirname %s)/check_clang_tidy.py %s misc-unused-parameters %t -- -xc
 
 // Basic removal
 // =============
