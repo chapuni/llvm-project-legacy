@@ -1,4 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.py %s readability-shrink-to-fit %t
+// RUN: %python %S/check_clang_tidy.py %s readability-shrink-to-fit %t
 
 namespace std {
 template <typename T> struct vector { void swap(vector &other); };

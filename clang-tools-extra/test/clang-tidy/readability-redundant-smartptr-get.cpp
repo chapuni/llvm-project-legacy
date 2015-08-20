@@ -1,4 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.py %s readability-redundant-smartptr-get %t
+// RUN: %python %S/check_clang_tidy.py %s readability-redundant-smartptr-get %t
 
 #define NULL __null
 

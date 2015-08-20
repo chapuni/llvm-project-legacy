@@ -1,4 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.py %s modernize-use-nullptr %t \
+// RUN: %python %S/check_clang_tidy.py %s modernize-use-nullptr %t \
 // RUN:   -config="{CheckOptions: [{key: modernize-use-nullptr.NullMacros, value: 'MY_NULL,NULL'}]}" \
 // RUN:   -- -std=c++11
 

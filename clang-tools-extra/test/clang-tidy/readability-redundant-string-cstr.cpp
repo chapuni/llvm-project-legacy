@@ -1,4 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.py %s readability-redundant-string-cstr %t
+// RUN: %python %S/check_clang_tidy.py %s readability-redundant-string-cstr %t
 
 namespace std {
 template <typename T>

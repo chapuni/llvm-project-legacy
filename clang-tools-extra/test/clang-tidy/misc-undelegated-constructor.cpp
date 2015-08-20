@@ -1,4 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.py %s misc-undelegated-constructor %t
+// RUN: %python %S/check_clang_tidy.py %s misc-undelegated-constructor %t
 
 struct Ctor;
 Ctor foo();

@@ -1,4 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.py %s misc-macro-repeated-side-effects %t
+// RUN: %python %S/check_clang_tidy.py %s misc-macro-repeated-side-effects %t
 
 #define badA(x,y)  ((x)+((x)+(y))+(y))
 void bad(int ret, int a, int b) {

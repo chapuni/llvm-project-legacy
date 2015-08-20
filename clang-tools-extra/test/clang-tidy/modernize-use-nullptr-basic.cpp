@@ -1,4 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.py %s modernize-use-nullptr %t -- \
+// RUN: %python %S/check_clang_tidy.py %s modernize-use-nullptr %t -- \
 // RUN:   -std=c++98 -Wno-non-literal-null-conversion
 
 const unsigned int g_null = 0;

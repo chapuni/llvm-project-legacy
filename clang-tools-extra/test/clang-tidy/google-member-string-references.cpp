@@ -1,4 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.py %s google-runtime-member-string-references %t
+// RUN: %python %S/check_clang_tidy.py %s google-runtime-member-string-references %t
 
 namespace std {
 template<typename T>

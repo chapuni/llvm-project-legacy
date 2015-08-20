@@ -1,4 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.py %s readability-braces-around-statements %t
+// RUN: %python %S/check_clang_tidy.py %s readability-braces-around-statements %t
 
 void do_something(const char *) {}
 

@@ -1,4 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.py %s readability-container-size-empty %t
+// RUN: %python %S/check_clang_tidy.py %s readability-container-size-empty %t
 
 namespace std {
 template <typename T> struct vector {

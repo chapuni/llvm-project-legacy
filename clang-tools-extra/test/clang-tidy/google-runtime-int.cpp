@@ -1,4 +1,4 @@
-// RUN: $(dirname %s)/check_clang_tidy.py %s google-runtime-int %t
+// RUN: %python %S/check_clang_tidy.py %s google-runtime-int %t
 
 long a();
 // CHECK-MESSAGES: [[@LINE-1]]:1: warning: consider replacing 'long' with 'int{{..}}'
